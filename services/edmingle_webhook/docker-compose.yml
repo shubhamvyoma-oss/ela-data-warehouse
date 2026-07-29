@@ -1,0 +1,40 @@
+services:
+  webhook:
+    container_name: edmingle_webhook
+    image: edmingle-webhook:latest
+    build: .
+    env_file:
+      - .env
+    ports:
+      - "5100:5100"
+    volumes:
+      - edmingle_webhook_data:/app/data
+      - edmingle_webhook_logs:/app/logs
+    networks:
+      - edmingle_network
+    restart: unless-stopped
+    stop_grace_period: 45s
+
+  replay:
+    image: edmingle-webhook:latest
+    build: .
+    env_file:
+      - .env
+    command: ["python", "scripts/replay_worker.py"]
+    volumes:
+      - edmingle_webhook_data:/app/data
+      - edmingle_webhook_logs:/app/logs
+    networks:
+      - edmingle_network
+    restart: unless-stopped
+    stop_grace_period: 45s
+
+volumes:
+  edmingle_webhook_data:
+    name: edmingle_webhook_data
+  edmingle_webhook_logs:
+    name: edmingle_webhook_logs
+
+networks:
+  edmingle_network:
+    name: edmingle_network

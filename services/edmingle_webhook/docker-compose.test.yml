@@ -1,0 +1,83 @@
+services:
+  postgres-test:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: webhook_test
+      POSTGRES_USER: webhook_test_user
+      POSTGRES_PASSWORD: local_test_password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U webhook_test_user -d webhook_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    ports:
+      - "127.0.0.1:55432:5432"
+    volumes:
+      - webhook_test_pg_data:/var/lib/postgresql/data
+    networks:
+      - webhook_test_network
+
+  migrate-test:
+    image: postgres:16-alpine
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: local_test_password
+    command:
+      - sh
+      - -c
+      - |
+        set -eu
+        psql -h postgres-test -U webhook_test_user -d webhook_test -v ON_ERROR_STOP=1 -c "CREATE TABLE IF NOT EXISTS public.webhook_events (id serial PRIMARY KEY, source text, received_at timestamp without time zone, raw_payload jsonb);"
+        psql -h postgres-test -U webhook_test_user -d webhook_test -v ON_ERROR_STOP=1 -f /migrations/001_operational_tables.sql
+    volumes:
+      - ./migrations:/migrations:ro
+    networks:
+      - webhook_test_network
+
+  webhook-test:
+    image: edmingle-webhook:test-local
+    build: .
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      migrate-test:
+        condition: service_completed_successfully
+    environment:
+      DB_NAME: webhook_test
+      DB_USER: webhook_test_user
+      DB_PASSWORD: local_test_password
+      DB_HOST: postgres-test
+      DB_PORT: "5432"
+      WEBHOOK_SCHEMA_NAME: public
+      WEBHOOK_TABLE_NAME: webhook_events
+      WEBHOOK_AUTH_MODE: disabled
+      WEBHOOK_DEDUP_ENABLED: "true"
+      WEBHOOK_TOTAL_FAILURE_STATUS: "503"
+      QUEUE_CLAIM_TIMEOUT_SECONDS: "5"
+      DATA_DIRECTORY: /app/data
+      LOG_DIRECTORY: /app/logs
+      ADMIN_TOKEN: local_test_admin_token
+      RATE_LIMIT_ENABLED: "false"
+      REPLAY_BATCH_SIZE: "100"
+      REPLAY_MAX_ATTEMPTS: "3"
+      DISK_MIN_FREE_MB: "1"
+    ports:
+      - "127.0.0.1:5101:5100"
+    volumes:
+      - webhook_test_data:/app/data
+      - webhook_test_logs:/app/logs
+    restart: unless-stopped
+    stop_grace_period: 45s
+    networks:
+      - webhook_test_network
+
+volumes:
+  webhook_test_pg_data:
+  webhook_test_data:
+  webhook_test_logs:
+
+networks:
+  webhook_test_network:
+    driver: bridge

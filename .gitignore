@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Environments and secrets
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+
+# Runtime logs and data
+*.log
+/logs/
+/data/
+/tmp/
+/temp/
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Service runtime artifacts
+services/*/logs/*
+!services/*/logs/.gitkeep
+services/*/data/buffer/*
+!services/*/data/buffer/.gitkeep
+services/*/data/archive/*
+!services/*/data/archive/.gitkeep
+services/*/data/failed/*
+!services/*/data/failed/.gitkeep

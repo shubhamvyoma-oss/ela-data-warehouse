@@ -94,3 +94,24 @@ def test_client_converts_timeout_to_safe_error(settings: EdmingleSettings) -> No
     with pytest.raises(ApiRequestError) as error:
         client.get_json("/records", context="test")
     assert "secret URL" not in str(error.value)
+
+
+@pytest.mark.parametrize(
+    ("payload", "expected"),
+    [
+        ({"error_code": 6001, "message": "private source detail"}, "invalid parameters"),
+        ({"code": "6002", "message": "private source detail"}, "authentication failure"),
+    ],
+)
+def test_client_rejects_application_errors_without_exposing_body(
+    settings: EdmingleSettings, payload: dict[str, object], expected: str
+) -> None:
+    client = EdmingleApiClient(
+        settings,
+        session=FakeSession([FakeResponse(200, payload)]),
+        sleep=lambda _: None,
+    )
+
+    with pytest.raises(ApiRequestError, match=expected) as error:
+        client.get_json("/records", context="test")
+    assert "private source detail" not in str(error.value)

@@ -45,6 +45,7 @@ class RunRepository:
         rows_written: int,
         rows_rejected: int,
         checkpoint_after: dict[str, Any],
+        request_count: int,
         error_category: str | None = None,
     ) -> None:
         event_status = "succeeded" if status == "succeeded" else "failed"
@@ -59,6 +60,7 @@ class RunRepository:
                     rows_written = %s,
                     rows_rejected = %s,
                     checkpoint_after = %s,
+                    metadata = metadata || jsonb_build_object('request_count', %s),
                     error_category = %s,
                     error_message = CASE WHEN %s IS NULL THEN NULL
                                          ELSE 'collector failed; inspect protected application logs' END
@@ -70,6 +72,7 @@ class RunRepository:
                     rows_written,
                     rows_rejected,
                     Json(checkpoint_after),
+                    request_count,
                     error_category,
                     error_category,
                     run_id,
@@ -87,8 +90,34 @@ class RunRepository:
                     event_type,
                     event_status,
                     rows_written,
-                    Json({"rows_read": rows_read, "rows_rejected": rows_rejected}),
+                    Json({
+                        "rows_read": rows_read,
+                        "rows_rejected": rows_rejected,
+                        "request_count": request_count,
+                    }),
                 ),
+            )
+
+
+class CredentialMetadataRepository:
+    """Persist API credential lifecycle metadata; credential values are never accepted."""
+
+    def __init__(self, database: Database) -> None:
+        self.database = database
+
+    def upsert_edmingle(self, *, expires_at: datetime | None, status: str) -> None:
+        with self.database.transaction() as connection, connection.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO system.credential_metadata (
+                    credential_name, provider, expires_at, status, updated_at
+                ) VALUES ('edmingle_api', 'edmingle', %s, %s, now())
+                ON CONFLICT (credential_name) DO UPDATE
+                SET expires_at = EXCLUDED.expires_at,
+                    status = EXCLUDED.status,
+                    updated_at = now()
+                """,
+                (expires_at, status),
             )
 
 

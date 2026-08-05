@@ -14,6 +14,7 @@ IST = timezone(timedelta(hours=5, minutes=30), name="IST")
 
 class AttendanceCollector:
     name = "attendance"
+    checkpoint_partition_key = "daily"
 
     def run(self, runtime: CollectorRuntime, checkpoint: dict[str, Any]) -> None:
         start_date, end_date = _collection_window(checkpoint)

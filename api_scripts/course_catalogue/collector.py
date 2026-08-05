@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from api_scripts.common.edmingle import find_record_list
+from api_scripts.common.edmingle import require_record_list
 from api_scripts.common.models import RawRecord, first_value, stable_record_key
 from api_scripts.common.repositories import utc_iso
 from api_scripts.common.runtime import CollectorRuntime
@@ -10,6 +10,7 @@ from api_scripts.common.runtime import CollectorRuntime
 
 class CourseCatalogueCollector:
     name = "course_catalogue"
+    checkpoint_partition_key = "default"
 
     def run(self, runtime: CollectorRuntime, checkpoint: dict[str, Any]) -> None:
         institute_id = runtime.client.settings.institute_id
@@ -20,7 +21,7 @@ class CourseCatalogueCollector:
             params={"institution_id": institute_id},
             context="course catalogue",
         )
-        rows = find_record_list(payload, "course catalogue response")
+        rows = require_record_list(payload, "response", "course catalogue response")
         records = [_course_record(row, institute_id) for row in rows]
         runtime.commit(
             records,

@@ -13,6 +13,7 @@ LOGGER = logging.getLogger("warehouse.collector")
 
 class Collector(Protocol):
     name: str
+    checkpoint_partition_key: str
 
     def run(self, runtime: CollectorRuntime, checkpoint: dict[str, Any]) -> None: ...
 

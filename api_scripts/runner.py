@@ -5,7 +5,12 @@ import logging
 
 from api_scripts.api_key_manager.lifecycle import ApiKeyLifecycle
 from api_scripts.common.api_client import EdmingleApiClient
-from api_scripts.common.repositories import BronzeRepository, CheckpointRepository, RunRepository
+from api_scripts.common.repositories import (
+    BronzeRepository,
+    CheckpointRepository,
+    CredentialMetadataRepository,
+    RunRepository,
+)
 from api_scripts.common.runtime import CollectorRuntime
 from shared.config import DatabaseSettings, EdmingleSettings, WarehouseSettings
 from shared.database import Database
@@ -36,7 +41,8 @@ def run_collector(name: str, run_type: str = "manual") -> int:
     warehouse_settings = WarehouseSettings.from_environment()
     configure_logging(warehouse_settings.log_level)
     edmingle_settings = EdmingleSettings.from_environment()
-    ApiKeyLifecycle.from_settings(edmingle_settings).assert_collection_allowed(
+    lifecycle = ApiKeyLifecycle.from_settings(edmingle_settings)
+    lifecycle.assert_collection_allowed(
         environment=warehouse_settings.environment
     )
     client = EdmingleApiClient(edmingle_settings)
@@ -45,7 +51,12 @@ def run_collector(name: str, run_type: str = "manual") -> int:
     checkpoints = CheckpointRepository(database)
     runs = RunRepository(database)
     try:
-        checkpoint_before = checkpoints.get(name)
+        CredentialMetadataRepository(database).upsert_edmingle(
+            expires_at=lifecycle.expires_at,
+            status=lifecycle.status(),
+        )
+        checkpoint_partition_key = collector.checkpoint_partition_key
+        checkpoint_before = checkpoints.get(name, checkpoint_partition_key)
         run_id = runs.start(name, run_type, checkpoint_before)
         runtime = CollectorRuntime(
             collector_name=name,
@@ -64,6 +75,7 @@ def run_collector(name: str, run_type: str = "manual") -> int:
                 rows_written=runtime.stats.rows_written,
                 rows_rejected=runtime.stats.rows_rejected,
                 checkpoint_after=runtime.last_checkpoint or checkpoint_before,
+                request_count=client.request_count,
             )
             LOGGER.info(
                 "collector succeeded",
@@ -85,6 +97,7 @@ def run_collector(name: str, run_type: str = "manual") -> int:
                 rows_written=runtime.stats.rows_written,
                 rows_rejected=runtime.stats.rows_rejected,
                 checkpoint_after=runtime.last_checkpoint or checkpoint_before,
+                request_count=client.request_count,
                 error_category=type(exc).__name__,
             )
             LOGGER.error(

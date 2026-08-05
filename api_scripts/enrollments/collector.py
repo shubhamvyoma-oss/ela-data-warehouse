@@ -15,6 +15,7 @@ from api_scripts.common.runtime import CollectorRuntime
 
 class EnrollmentCollector:
     name = "enrollments"
+    checkpoint_partition_key = "default"
 
     def run(self, runtime: CollectorRuntime, checkpoint: dict[str, Any]) -> None:
         batches = sorted(_fetch_batch_index(runtime), key=_batch_sort_key)
@@ -37,7 +38,7 @@ class EnrollmentCollector:
                         "class_id": batch["class_id"],
                         "master_batch_id": batch["master_batch_id"],
                         "page": page,
-                        "per_page": 100,
+                        "per_page": runtime.client.settings.students_per_page,
                         "ORGID": runtime.client.settings.organization_id,
                     },
                     context=f"enrollments batch={batch_key} page={page}",
@@ -90,7 +91,7 @@ def _fetch_batch_index(runtime: CollectorRuntime) -> list[dict[str, Any]]:
                 params={
                     "status": status,
                     "page": page,
-                    "per_page": 100,
+                    "per_page": runtime.client.settings.batches_per_page,
                     "organization_id": runtime.client.settings.organization_id,
                 },
                 context=f"enrollment batch index status={status} page={page}",

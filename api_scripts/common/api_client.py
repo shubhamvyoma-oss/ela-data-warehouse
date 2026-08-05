@@ -58,7 +58,7 @@ class EdmingleApiClient:
             if path.startswith(("http://", "https://"))
             else urljoin(f"{self.settings.base_url}/", path.lstrip("/"))
         )
-        delay = 1.0
+        delay = self.settings.initial_retry_delay_seconds
         for attempt in range(1, self.settings.max_retries + 1):
             self._rate_limit()
             self.request_count += 1
@@ -72,7 +72,7 @@ class EdmingleApiClient:
                 if attempt == self.settings.max_retries:
                     raise ApiRequestError(f"{context} failed after transient network errors") from None
                 self._backoff(delay)
-                delay = min(delay * 2, 120.0)
+                delay = min(delay * 2, self.settings.maximum_retry_delay_seconds)
                 continue
             except requests.RequestException:
                 raise ApiRequestError(f"{context} failed with a non-retriable client error") from None
@@ -84,10 +84,11 @@ class EdmingleApiClient:
                     if attempt == self.settings.max_retries:
                         raise ApiContractError(f"{context} returned invalid JSON") from None
                     self._backoff(delay)
-                    delay = min(delay * 2, 120.0)
+                    delay = min(delay * 2, self.settings.maximum_retry_delay_seconds)
                     continue
                 if not isinstance(payload, dict):
                     raise ApiContractError(f"{context} returned a non-object JSON response")
+                _raise_for_application_error(payload, context)
                 return payload
 
             if response.status_code in {400, 401, 403, 404}:
@@ -100,7 +101,7 @@ class EdmingleApiClient:
                     )
                 retry_after = _retry_after_seconds(response.headers.get("Retry-After"))
                 self._backoff(max(delay, retry_after))
-                delay = min(delay * 2, 120.0)
+                delay = min(delay * 2, self.settings.maximum_retry_delay_seconds)
                 continue
 
             raise ApiRequestError(f"{context} returned unexpected HTTP {response.status_code}")
@@ -128,3 +129,12 @@ def _retry_after_seconds(value: str | None) -> float:
         return max(0.0, min(float(value), 300.0))
     except ValueError:
         return 0.0
+
+
+def _raise_for_application_error(payload: dict[str, Any], context: str) -> None:
+    """Reject Edmingle errors returned inside an HTTP 200 response without exposing its body."""
+    error_code = str(payload.get("error_code") or payload.get("code") or "").strip()
+    if error_code == "6001":
+        raise ApiRequestError(f"{context} returned Edmingle error 6001 (invalid parameters)")
+    if error_code == "6002":
+        raise ApiRequestError(f"{context} returned Edmingle error 6002 (authentication failure)")

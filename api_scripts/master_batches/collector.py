@@ -15,6 +15,7 @@ from api_scripts.common.runtime import CollectorRuntime
 
 class MasterBatchCollector:
     name = "master_batches"
+    checkpoint_partition_key = "default"
 
     def run(self, runtime: CollectorRuntime, checkpoint: dict[str, Any]) -> None:
         if checkpoint.get("in_progress"):
@@ -33,7 +34,7 @@ class MasterBatchCollector:
                     params={
                         "status": status,
                         "page": current_page,
-                        "per_page": 100,
+                        "per_page": runtime.client.settings.batches_per_page,
                         "organization_id": runtime.client.settings.organization_id,
                     },
                     context=f"master_batches status={status} page={current_page}",

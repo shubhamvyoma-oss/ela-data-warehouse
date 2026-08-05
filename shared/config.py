@@ -160,6 +160,10 @@ class EdmingleSettings:
     request_timeout_seconds: int
     max_retries: int
     minimum_request_interval_seconds: float
+    batches_per_page: int = 100
+    students_per_page: int = 100
+    initial_retry_delay_seconds: float = 5.0
+    maximum_retry_delay_seconds: float = 300.0
 
     @classmethod
     def from_environment(cls) -> EdmingleSettings:
@@ -181,6 +185,18 @@ class EdmingleSettings:
             minimum_request_interval_seconds=_float(
                 "EDMINGLE_MIN_REQUEST_INTERVAL_SECONDS", 2.5, minimum=0.0, maximum=60.0
             ),
+            batches_per_page=_integer(
+                "EDMINGLE_BATCHES_PER_PAGE", 100, minimum=1, maximum=1000
+            ),
+            students_per_page=_integer(
+                "EDMINGLE_STUDENTS_PER_PAGE", 100, minimum=1, maximum=1000
+            ),
+            initial_retry_delay_seconds=_float(
+                "EDMINGLE_INITIAL_RETRY_DELAY_SECONDS", 5.0, minimum=0.1, maximum=60.0
+            ),
+            maximum_retry_delay_seconds=_float(
+                "EDMINGLE_MAXIMUM_RETRY_DELAY_SECONDS", 300.0, minimum=1.0, maximum=1800.0
+            ),
         )
 
     def redacted_summary(self) -> dict[str, object]:
@@ -194,4 +210,8 @@ class EdmingleSettings:
             "request_timeout_seconds": self.request_timeout_seconds,
             "max_retries": self.max_retries,
             "minimum_request_interval_seconds": self.minimum_request_interval_seconds,
+            "batches_per_page": self.batches_per_page,
+            "students_per_page": self.students_per_page,
+            "initial_retry_delay_seconds": self.initial_retry_delay_seconds,
+            "maximum_retry_delay_seconds": self.maximum_retry_delay_seconds,
         }

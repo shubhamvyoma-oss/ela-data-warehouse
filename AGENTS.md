@@ -20,6 +20,8 @@ Before making non-trivial changes, read:
 2. `PROJECT_STANDARDS.md`
 3. `README.md`
 4. The relevant service README and docs.
+5. `documentation/ARCHITECTURE.md` for warehouse-platform work.
+6. `documentation/API_JOBS.md` for API collection work.
 
 For webhook work, read:
 
@@ -58,3 +60,13 @@ Do not drop, truncate, rename, recreate, or replace `public.webhook_events`.
 - Add shared abstractions only when more than one component needs them.
 - Update documentation when behavior, structure, deployment, or operations change.
 - Run relevant verification before reporting completion.
+
+## Warehouse Platform Rules
+
+- Keep dedicated API jobs under `api_scripts/<job_name>/`.
+- Keep shared API mechanics under `api_scripts/common/`.
+- Keep ingestion free of business transformation logic.
+- Never bypass Bronze or mutate immutable Bronze rows.
+- Keep operational metadata in `system`, separate from business schemas.
+- Use a warehouse database separate from `webhook_db`.
+- Keep the scheduler and every job disabled until deployment validation is approved.

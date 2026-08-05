@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [develop]
+
+permissions:
+  contents: read
+
+jobs:
+  platform-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements-dev.txt
+      - run: ruff check api_scripts database manual_imports platform shared tests warehouse_cli.py
+      - run: pytest
+
+  postgres-integration:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: ela_warehouse
+          POSTGRES_USER: ela_app
+          POSTGRES_PASSWORD: ci_only_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ela_app -d ela_warehouse"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      WAREHOUSE_DB_HOST: 127.0.0.1
+      WAREHOUSE_DB_PORT: 5432
+      WAREHOUSE_DB_NAME: ela_warehouse
+      WAREHOUSE_DB_USER: ela_app
+      WAREHOUSE_DB_PASSWORD: ci_only_password
+      WAREHOUSE_DB_SSLMODE: disable
+      WAREHOUSE_ENVIRONMENT: test
+      WAREHOUSE_DATA_DIRECTORY: .
+      WAREHOUSE_MIN_FREE_DISK_MB: 512
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: python warehouse_cli.py migrate
+      - run: python warehouse_cli.py migrate
+      - run: python warehouse_cli.py preflight
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/warehouse.Dockerfile
+          push: false
+
+  webhook-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/edmingle_webhook
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: services/edmingle_webhook/requirements*.txt
+      - run: pip install -r requirements-dev.txt
+      - run: pytest

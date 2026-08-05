@@ -21,6 +21,17 @@ venv/
 /data/
 /tmp/
 /temp/
+/.tmp/
+pytest-cache-files-*/
+*.csv
+*.tsv
+*.xlsx
+*.xls
+*.jsonl
+*.dump
+*.backup
+*.parquet
+*checkpoint*.json
 
 # OS and editor files
 .DS_Store
@@ -37,3 +48,8 @@ services/*/data/archive/*
 !services/*/data/archive/.gitkeep
 services/*/data/failed/*
 !services/*/data/failed/.gitkeep
+
+# Local warehouse state
+warehouse-data/
+warehouse-logs/
+backups/

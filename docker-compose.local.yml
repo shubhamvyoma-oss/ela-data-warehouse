@@ -1,0 +1,64 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ela_warehouse
+      POSTGRES_USER: ela_app
+      POSTGRES_PASSWORD: local_development_only
+    ports:
+      - "127.0.0.1:55432:5432"
+    volumes:
+      - ela_warehouse_postgres_local:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ela_app -d ela_warehouse"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - ela_warehouse_network
+
+  warehouse-scheduler:
+    environment:
+      WAREHOUSE_DB_HOST: postgres
+      WAREHOUSE_DB_PORT: 5432
+      WAREHOUSE_DB_NAME: ela_warehouse
+      WAREHOUSE_DB_USER: ela_app
+      WAREHOUSE_DB_PASSWORD: local_development_only
+      WAREHOUSE_DB_SSLMODE: disable
+      WAREHOUSE_ENVIRONMENT: development
+      WAREHOUSE_MIN_FREE_DISK_MB: 512
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  warehouse-migrate:
+    environment:
+      WAREHOUSE_DB_HOST: postgres
+      WAREHOUSE_DB_PORT: 5432
+      WAREHOUSE_DB_NAME: ela_warehouse
+      WAREHOUSE_DB_USER: ela_app
+      WAREHOUSE_DB_PASSWORD: local_development_only
+      WAREHOUSE_DB_SSLMODE: disable
+      WAREHOUSE_ENVIRONMENT: development
+      WAREHOUSE_MIN_FREE_DISK_MB: 512
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  warehouse-cli:
+    environment:
+      WAREHOUSE_DB_HOST: postgres
+      WAREHOUSE_DB_PORT: 5432
+      WAREHOUSE_DB_NAME: ela_warehouse
+      WAREHOUSE_DB_USER: ela_app
+      WAREHOUSE_DB_PASSWORD: local_development_only
+      WAREHOUSE_DB_SSLMODE: disable
+      WAREHOUSE_ENVIRONMENT: development
+      WAREHOUSE_MIN_FREE_DISK_MB: 512
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  ela_warehouse_postgres_local:
+    name: ela_warehouse_postgres_local

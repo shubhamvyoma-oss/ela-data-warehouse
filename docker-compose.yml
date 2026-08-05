@@ -1,0 +1,74 @@
+services:
+  warehouse-scheduler:
+    image: ela-data-warehouse:latest
+    build:
+      context: .
+      dockerfile: docker/warehouse.Dockerfile
+    env_file:
+      - path: .env
+        required: false
+    command: ["python", "platform/scheduler/runner.py"]
+    restart: unless-stopped
+    stop_grace_period: 60s
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,noexec,nosuid
+    volumes:
+      - ela_warehouse_data:/app/data
+      - ela_warehouse_logs:/app/logs
+    networks:
+      - ela_warehouse_network
+    healthcheck:
+      test: ["CMD", "python", "platform/scheduler/healthcheck.py"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    mem_limit: 512m
+    cpus: 0.50
+    pids_limit: 100
+
+  warehouse-migrate:
+    image: ela-data-warehouse:latest
+    build:
+      context: .
+      dockerfile: docker/warehouse.Dockerfile
+    env_file:
+      - path: .env
+        required: false
+    command: ["python", "warehouse_cli.py", "migrate"]
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,noexec,nosuid
+    networks:
+      - ela_warehouse_network
+    profiles: ["tools"]
+
+  warehouse-cli:
+    image: ela-data-warehouse:latest
+    build:
+      context: .
+      dockerfile: docker/warehouse.Dockerfile
+    env_file:
+      - path: .env
+        required: false
+    command: ["python", "warehouse_cli.py", "preflight"]
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,noexec,nosuid
+    volumes:
+      - ela_warehouse_data:/app/data
+      - ela_warehouse_logs:/app/logs
+    networks:
+      - ela_warehouse_network
+    profiles: ["tools"]
+
+volumes:
+  ela_warehouse_data:
+    name: ela_warehouse_data
+  ela_warehouse_logs:
+    name: ela_warehouse_logs
+
+networks:
+  ela_warehouse_network:
+    name: ela_warehouse_network

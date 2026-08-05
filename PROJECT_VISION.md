@@ -1,27 +1,50 @@
 # Project Vision
 
-`ela-data-warehouse` is the long-term engineering platform for the Vyoma E-Learning Analytics data system.
+`ela-data-warehouse` is the engineering home for the Vyoma E-Learning Analytics data platform and is intended to become the organization's trusted analytical source.
 
-This repository is not a migration of the legacy warehouse and is not only a webhook project. It will gradually become the single home for production services, API collection pipelines, Bronze/Silver/Gold transformations, database migrations, scheduling, monitoring, notifications, verification, reporting, and durable documentation.
+It is not a webhook repository and it is not a collection of unrelated scripts. The webhook is one ingestion service inside a larger automated platform.
 
-## Phase 1
+## Supported sources
 
-The first phase establishes the repository foundation and places the existing production-ready webhook service at:
+The current source boundary is deliberately narrow:
+
+- Edmingle LMS webhooks
+- Edmingle LMS APIs
+- approved manually maintained CSV and Excel files
+
+No future source system is introduced without an explicit requirement.
+
+## Platform flow
 
 ```text
-services/edmingle_webhook/
+Webhook + API jobs + Manual imports
+                 |
+                 v
+             Bronze
+                 |
+                 v
+             Silver
+                 |
+                 v
+              Gold
+                 |
+                 v
+          Power BI / analytics
 ```
 
-The webhook service remains a standalone service. Its internal structure and behavior are preserved.
+The `system` schema stores operational configuration, audit history, pipeline runs, checkpoints, scheduler state, and non-secret credential metadata. Operational metadata never shares business tables.
 
-## Long-Term Direction
+## Engineering principles
 
-Future functionality should be added only when needed and should fit naturally into the repository boundaries:
+- automation first
+- never lose accepted raw data
+- idempotent processing
+- replayability and recoverability
+- configuration over hardcoding
+- audit every important operation
+- separate ingestion from transformation
+- keep architecture simple and responsibilities explicit
 
-- Services live under `services/`.
-- Data collection and transformation workflows live under `pipelines/`.
-- Platform database assets live under `database/`.
-- Shared code is introduced under `shared/` only after more than one component needs it.
-- Platform-wide documentation lives under `documentation/`.
+## Deployment boundary
 
-Do not build future phases before they are required.
+The existing production Edmingle webhook, its port, and `webhook_db.public.webhook_events` remain undisturbed. The warehouse uses a separate PostgreSQL database and separate Docker resources. Migration of production traffic requires separate approval after parallel validation.

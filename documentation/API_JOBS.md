@@ -1,6 +1,6 @@
 # API Jobs
 
-Each API source has a dedicated folder under `collectors/` and exposes a collector through the central runner.
+Each API source has a dedicated folder under `api_scripts/` and exposes a collector through the central runner.
 
 | Job | Source behavior confirmed from supplied scripts | Bronze resource |
 | --- | --- | --- |
@@ -9,7 +9,7 @@ Each API source has a dedicated folder under `collectors/` and exposes a collect
 | `catalogue` | Institute course catalogue from the confirmed `response` list | `courses` |
 | `batches` | Paged active, archived, and completed master batches | `batches` |
 
-Folders for teachers, students, sessions, and transactions are reserved only as documented contracts. Their collectors are not fabricated before endpoint samples are supplied.
+Folders for teachers, students, sessions, and transactions are reserved only as documented contracts. Their API scripts are not fabricated before endpoint samples are supplied.
 
 ## Contract for every collector
 
@@ -32,5 +32,5 @@ while the attendance job enforces at least 2.5 seconds between calls. These are 
 `EDMINGLE_MAX_RETRIES`; HTTP 400/401/403/404 and Edmingle application errors 6001/6002 fail
 the run so a bad request can never be checkpointed as an empty successful response.
 
-Attendance reads and writes the `daily` checkpoint partition. The other collectors use the
+Attendance reads and writes the `daily` checkpoint partition. The other API scripts use the
 `default` partition. This distinction is part of the recovery contract.

@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from collectors.common.api_client import ApiContractError
-from collectors.common.models import first_value, stable_record_key
+from api_scripts.common.api_client import ApiContractError
+from api_scripts.common.models import first_value, stable_record_key
 
 BATCH_STATUSES = (0, 1, 3)
 

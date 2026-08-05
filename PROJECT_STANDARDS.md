@@ -3,8 +3,8 @@
 ## Architecture
 
 - One folder, module, and service has one clear responsibility.
-- API jobs live in dedicated folders under `collectors/`.
-- Shared API mechanics live in `collectors/common/`; job-specific request and response logic stays with the job.
+- API jobs live in dedicated folders under `api_scripts/`.
+- Shared API mechanics live in `api_scripts/common/`; job-specific request and response logic stays with the job.
 - Webhooks and API jobs only ingest. Business transformations do not run in ingestion code.
 - Bronze is immutable raw data, Silver is validated and standardized, and Gold is business-ready.
 - Current configuration and platform state belong in `system` or `monitoring`.
@@ -15,7 +15,7 @@
 ## Data reliability
 
 - Every pipeline run receives a stable run identifier and audit trail.
-- Collectors update checkpoints only after their Bronze writes commit.
+- API scripts update checkpoints only after their Bronze writes commit.
 - Replaying the same source data must not create duplicate raw versions.
 - Raw payloads must remain available for reprocessing.
 - Failed rows are quarantined with non-sensitive failure metadata.

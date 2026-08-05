@@ -2,15 +2,15 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from collectors.runner import collector_registry
+from api_scripts.runner import collector_registry
 
 
 def test_repository_uses_frozen_component_layout() -> None:
     required = {
-        "collectors/attendance",
-        "collectors/enrollment",
-        "collectors/batches",
-        "collectors/catalogue",
+        "api_scripts/attendance",
+        "api_scripts/enrollment",
+        "api_scripts/batches",
+        "api_scripts/catalogue",
         "services/edmingle_webhook",
         "services/scheduler",
         "processing/bronze",
@@ -25,7 +25,7 @@ def test_repository_uses_frozen_component_layout() -> None:
     }
 
     assert all(Path(path).exists() for path in required)
-    assert not Path("api_scripts").exists()
+    assert not Path("collectors").exists()
     assert not Path("platform/scheduler").exists()
 
 

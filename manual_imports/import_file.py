@@ -12,8 +12,8 @@ from typing import Any
 from openpyxl import load_workbook
 from psycopg2.extras import Json, execute_values
 
-from collectors.common.models import payload_sha256
-from collectors.common.repositories import RunRepository
+from api_scripts.common.models import payload_sha256
+from api_scripts.common.repositories import RunRepository
 from shared.config import DatabaseSettings, WarehouseSettings
 from shared.database import Database
 from shared.logging import configure_logging

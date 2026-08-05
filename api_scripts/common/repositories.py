@@ -7,7 +7,7 @@ from typing import Any
 
 from psycopg2.extras import Json, execute_values
 
-from collectors.common.models import RawRecord
+from api_scripts.common.models import RawRecord
 from shared.database import Database
 
 

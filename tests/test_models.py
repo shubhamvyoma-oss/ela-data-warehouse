@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collectors.common.models import RawRecord, payload_sha256, stable_record_key
+from api_scripts.common.models import RawRecord, payload_sha256, stable_record_key
 
 
 def test_payload_hash_is_independent_of_mapping_order() -> None:

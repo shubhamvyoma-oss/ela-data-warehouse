@@ -4,7 +4,7 @@ SELECT current_database() AS database_name,
 
 SELECT schema_name
 FROM information_schema.schemata
-WHERE schema_name IN ('system', 'bronze', 'silver', 'gold')
+WHERE schema_name IN ('system', 'audit', 'monitoring', 'bronze', 'silver', 'gold')
 ORDER BY schema_name;
 
 SELECT version, checksum_sha256, applied_at
@@ -12,6 +12,6 @@ FROM system.schema_migrations
 ORDER BY version;
 
 SELECT status, count(*)
-FROM system.pipeline_runs
+FROM audit.pipeline_runs
 GROUP BY status
 ORDER BY status;

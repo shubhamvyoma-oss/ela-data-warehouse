@@ -3,7 +3,7 @@
 ## Daily checks
 
 - scheduler container health
-- failed `system.pipeline_runs`
+- failed `audit.pipeline_runs`
 - overdue scheduler jobs
 - API-key expiry metadata
 - collector checkpoint age
@@ -17,19 +17,19 @@
 ```sql
 SELECT pipeline_name, status, started_at, finished_at,
        rows_read, rows_written, rows_rejected, error_category
-FROM system.pipeline_runs
+FROM audit.pipeline_runs
 ORDER BY started_at DESC
 LIMIT 50;
 ```
 
 ```sql
 SELECT collector_name, partition_key, updated_at, checkpoint
-FROM system.collector_checkpoints
+FROM system.collection_checkpoints
 ORDER BY updated_at;
 ```
 
 ```sql
-SELECT resource, count(*) AS bronze_versions, max(collected_at) AS latest_collection
+SELECT resource, count(*) AS bronze_versions, max(received_at) AS latest_collection
 FROM bronze.edmingle_api_records
 GROUP BY resource
 ORDER BY resource;

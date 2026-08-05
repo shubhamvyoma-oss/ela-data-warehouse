@@ -7,7 +7,7 @@ services:
     env_file:
       - path: .env
         required: false
-    command: ["python", "platform/scheduler/runner.py"]
+    command: ["python", "services/scheduler/runner.py"]
     restart: unless-stopped
     stop_grace_period: 60s
     read_only: true
@@ -19,7 +19,7 @@ services:
     networks:
       - ela_warehouse_network
     healthcheck:
-      test: ["CMD", "python", "platform/scheduler/healthcheck.py"]
+      test: ["CMD", "python", "services/scheduler/healthcheck.py"]
       interval: 30s
       timeout: 5s
       retries: 3

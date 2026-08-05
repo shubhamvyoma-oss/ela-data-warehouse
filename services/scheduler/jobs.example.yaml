@@ -1,0 +1,18 @@
+poll_seconds: 30
+jobs:
+  - name: attendance_daily
+    collector: attendance
+    is_enabled: false
+    interval_minutes: 1440
+  - name: enrollment_weekly
+    collector: enrollment
+    is_enabled: false
+    interval_minutes: 10080
+  - name: catalogue_weekly
+    collector: catalogue
+    is_enabled: false
+    interval_minutes: 10080
+  - name: batches_weekly
+    collector: batches
+    is_enabled: false
+    interval_minutes: 10080

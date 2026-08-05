@@ -1,21 +1,21 @@
 # API Jobs
 
-Each API source has a dedicated folder under `api_scripts/` and exposes a collector through the central runner.
+Each API source has a dedicated folder under `collectors/` and exposes a collector through the central runner.
 
 | Job | Source behavior confirmed from supplied scripts | Bronze resource |
 | --- | --- | --- |
-| `attendance` | Date-windowed report `55`, one request per day | `attendance` |
-| `enrollments` | Master-batch index followed by paged class students | `enrollments` |
-| `course_catalogue` | Institute course catalogue from the confirmed `response` list | `course_catalogue` |
-| `master_batches` | Paged active, archived, and completed master batches | `master_batches` |
+| `attendance` | Date-windowed report `55`, one request per day | `attendance_records` |
+| `enrollment` | Master-batch index followed by paged class students | `student_enrollments` |
+| `catalogue` | Institute course catalogue from the confirmed `response` list | `courses` |
+| `batches` | Paged active, archived, and completed master batches | `batches` |
 
 Folders for teachers, students, sessions, and transactions are reserved only as documented contracts. Their collectors are not fabricated before endpoint samples are supplied.
 
 ## Contract for every collector
 
 1. Read credentials from environment-backed configuration.
-2. Read its checkpoint from `system.collector_checkpoints`.
-3. Create a `system.pipeline_runs` record.
+2. Read its checkpoint from `system.collection_checkpoints`.
+3. Create an `audit.pipeline_runs` record.
 4. Fetch source pages with bounded retry and rate limiting.
 5. Commit immutable Bronze rows and the next checkpoint together.
 6. Write business-operation audit events.

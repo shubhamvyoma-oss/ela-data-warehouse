@@ -6,7 +6,7 @@ ELA Data Warehouse currently accepts only Edmingle webhooks, Edmingle APIs, and 
 
 ## Ingestion
 
-`api_scripts/` contains one folder per dedicated API job. Each job owns endpoint-specific parameters, pagination, response extraction, and record identity. `api_scripts/common/` supplies HTTP resilience, rate limiting, audit integration, checkpoint storage, and immutable Bronze writes.
+`collectors/` contains one folder per dedicated API job. Each job owns endpoint-specific parameters, pagination, response extraction, and record identity. `collectors/common/` supplies HTTP resilience, rate limiting, audit integration, checkpoint storage, and immutable Bronze writes.
 
 `manual_imports/` validates supported files and stores every accepted source row in Bronze with the file hash and row number.
 
@@ -16,7 +16,9 @@ Ingestion does not apply business transformations.
 
 | Schema | Purpose |
 | --- | --- |
-| `system` | Runs, audit events, checkpoints, schedules, import metadata, and credential expiry metadata |
+| `system` | Configuration, registries, checkpoints, schedules, locks, and non-secret credential metadata |
+| `audit` | Immutable pipeline, event, and manual-import history |
+| `monitoring` | Current service, collector, and database health state |
 | `bronze` | Immutable API payloads and manual-import rows |
 | `silver` | Typed, deduplicated, standardized business entities after approved contracts exist |
 | `gold` | Approved facts, dimensions, KPIs, and reporting models |
@@ -29,14 +31,14 @@ Bronze stores payload JSON plus collection context. A content hash and stable re
 Warehouse scheduler
   |
   +-- attendance job -----------+
-  +-- enrollments job ----------+
-  +-- course catalogue job -----+--> Bronze --> Silver --> Gold
-  +-- master batches job -------+
+  +-- enrollment job -----------+
+  +-- catalogue job ------------+--> Bronze --> Silver --> Gold
+  +-- batches job --------------+
   +-- future approved jobs -----+
 
 Manual import CLI --------------+
 
-Every component --> system.pipeline_runs + system.audit_events
+Every component --> audit.pipeline_runs + audit.events
 ```
 
 The scheduler starts disabled by default. Operators enable individual jobs only after credentials, endpoint validation, storage capacity, database backup, and dry-run verification succeed.

@@ -4,7 +4,7 @@ import shutil
 from pathlib import Path
 from typing import Any
 
-from api_scripts.api_key_manager.lifecycle import ApiKeyLifecycle
+from collectors.api_key_manager.lifecycle import ApiKeyLifecycle
 from shared.config import DatabaseSettings, EdmingleSettings, WarehouseSettings
 from shared.database import Database
 
@@ -35,11 +35,14 @@ def run_preflight(*, require_api: bool = False) -> dict[str, Any]:
                     """
                     SELECT schema_name
                     FROM information_schema.schemata
-                    WHERE schema_name IN ('system', 'bronze', 'silver', 'gold')
+                    WHERE schema_name IN (
+                        'system', 'audit', 'monitoring', 'bronze', 'silver', 'gold'
+                    )
                     """
                 )
                 schemas = {row[0] for row in cursor.fetchall()}
-            missing = sorted({"system", "bronze", "silver", "gold"} - schemas)
+            required_schemas = {"system", "audit", "monitoring", "bronze", "silver", "gold"}
+            missing = sorted(required_schemas - schemas)
             checks.append(
                 {
                     "name": "warehouse_schemas",

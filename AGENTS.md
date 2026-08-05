@@ -63,8 +63,8 @@ Do not drop, truncate, rename, recreate, or replace `public.webhook_events`.
 
 ## Warehouse Platform Rules
 
-- Keep dedicated API jobs under `collectors/<job_name>/`.
-- Keep shared API mechanics under `collectors/common/`.
+- Keep dedicated API jobs under `api_scripts/<job_name>/`.
+- Keep shared API mechanics under `api_scripts/common/`.
 - Keep ingestion free of business transformation logic.
 - Never bypass Bronze or mutate immutable Bronze rows.
 - Keep current platform state in `system`/`monitoring` and history in `audit`.

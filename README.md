@@ -11,7 +11,7 @@ This branch builds the production foundation:
 - PostgreSQL `system`, `audit`, `monitoring`, `bronze`, `silver`, and `gold` schemas
 - migration tracking and operational metadata
 - checkpointed, audited API collection runtime
-- dedicated Edmingle API job folders under `collectors/`
+- dedicated Edmingle API job folders under `api_scripts/`
 - validated CSV/XLSX manual imports into Bronze
 - containerized migration, scheduler, and operator commands
 - deployment preflight checks and operational documentation
@@ -22,7 +22,7 @@ Silver transformations and Gold KPI models are added only after their source con
 
 | Path | Responsibility |
 | --- | --- |
-| `collectors/` | Dedicated Edmingle API jobs and their shared collection utilities |
+| `api_scripts/` | Dedicated Edmingle API jobs and their shared collection utilities |
 | `services/` | Independently deployed webhook, scheduler, and future operational services |
 | `manual_imports/` | Validated CSV/XLSX ingestion into Bronze |
 | `processing/` | Bronze, Silver, Gold, validation, replay, and data-quality processing |

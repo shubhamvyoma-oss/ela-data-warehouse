@@ -6,7 +6,7 @@ ESD-01.4 convention and resolves conflicts found across the conceptual architect
 ## Repository
 
 - Use lowercase `snake_case` for folders, Python modules, and files.
-- API collection jobs live under `collectors/<job_name>/`.
+- API collection jobs live under `api_scripts/<job_name>/`.
 - Approved file-ingestion code lives under `manual_imports/`; it is not an API collector.
 - Independently running processes live under `services/<service_name>/`.
 - Shared reusable Python capabilities live under `shared/<capability>/`.
@@ -35,10 +35,10 @@ ESD-01.4 convention and resolves conflicts found across the conceptual architect
 
 | Collector | Folder | Bronze resource |
 | --- | --- | --- |
-| Attendance | `collectors/attendance/` | `attendance_records` |
-| Enrollment | `collectors/enrollment/` | `student_enrollments` |
-| Batches | `collectors/batches/` | `batches` |
-| Catalogue | `collectors/catalogue/` | `courses` |
+| Attendance | `api_scripts/attendance/` | `attendance_records` |
+| Enrollment | `api_scripts/enrollment/` | `student_enrollments` |
+| Batches | `api_scripts/batches/` | `batches` |
+| Catalogue | `api_scripts/catalogue/` | `courses` |
 
 ## Compatibility exceptions
 

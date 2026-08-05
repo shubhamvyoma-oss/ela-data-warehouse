@@ -11,7 +11,7 @@ RUN addgroup --system warehouse && adduser --system --ingroup warehouse warehous
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY collectors ./collectors
+COPY api_scripts ./api_scripts
 COPY database ./database
 COPY manual_imports ./manual_imports
 COPY platform ./platform

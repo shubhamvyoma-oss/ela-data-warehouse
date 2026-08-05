@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 
 import pytest
 
-from collectors.api_key_manager.lifecycle import ApiKeyLifecycle, ApiKeyLifecycleError
+from api_scripts.api_key_manager.lifecycle import ApiKeyLifecycle, ApiKeyLifecycleError
 
 
 def test_active_key_allows_production_collection() -> None:

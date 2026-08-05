@@ -4,7 +4,7 @@ import shutil
 from pathlib import Path
 from typing import Any
 
-from collectors.api_key_manager.lifecycle import ApiKeyLifecycle
+from api_scripts.api_key_manager.lifecycle import ApiKeyLifecycle
 from shared.config import DatabaseSettings, EdmingleSettings, WarehouseSettings
 from shared.database import Database
 

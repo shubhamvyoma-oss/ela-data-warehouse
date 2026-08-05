@@ -6,12 +6,12 @@
 ## Context
 
 The supplied architecture files propose a PostgreSQL-centric data platform, six warehouse
-schemas, dedicated api_script and services, and a durable naming convention. The existing
-repository already implements the core Bronze runtime but used an older `api_scripts/` layout and
+schemas, dedicated API scripts and services, and a durable naming convention. The existing
+repository already implements the core Bronze runtime but used an older ingestion layout and
 stored historical audit data inside `system`.
 
-The source files are conceptual and contain conflicts. Examples include `collector_registry`
-versus `api_script`, singular raw-table examples versus the plural-table rule, and both encrypted
+The source files are conceptual and contain conflicts. Examples include competing API-folder
+names, singular raw-table examples versus the plural-table rule, and both encrypted
 database credentials and environment-backed secrets.
 
 ## Decision
@@ -19,7 +19,7 @@ database credentials and environment-backed secrets.
 Adopt the stable principles:
 
 - keep the business project and repository name ELA Data Warehouse;
-- use `api_script/`, `services/`, `processing/`, `warehouse/`, `platform/`, `dashboards/`,
+- use `api_scripts/`, `services/`, `processing/`, `warehouse/`, `platform/`, `dashboards/`,
   `manual_imports/`, `database/`, `docker/`, `shared/`, `documentation/`, and `tests/` as ownership
   boundaries;
 - use PostgreSQL schemas `bronze`, `silver`, `gold`, `system`, `audit`, and `monitoring`;
@@ -46,4 +46,6 @@ until its endpoint and redacted response contract are available.
 Imports, Docker packaging, scheduler paths, operator documentation, tests, and SQL references use
 the new names. Migration `003_naming_and_platform_schemas.sql` upgrades existing warehouse
 databases; migration `004_platform_registry_seeds.sql` registers the approved platform components.
-The same ordered migrations produce the final schema on a fresh installation.
+Migration `005_api_scripts_registry.sql` aligns the platform registry table with the repository's
+`api_scripts/` boundary without changing previously applied migration checksums. The same ordered
+migrations produce the final schema on a fresh installation.

@@ -4,7 +4,7 @@ import argparse
 import json
 from pathlib import Path
 
-from collectors.runner import collector_registry, run_collector
+from api_scripts.runner import collector_registry, run_collector
 from database.migrate import apply_migrations
 from manual_imports.import_file import import_file
 from shared.config import DatabaseSettings, WarehouseSettings

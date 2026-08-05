@@ -4,9 +4,9 @@ import logging
 import uuid
 from typing import Any, Protocol
 
-from collectors.common.api_client import EdmingleApiClient
-from collectors.common.models import CollectorStats, RawRecord
-from collectors.common.repositories import BronzeRepository
+from api_scripts.common.api_client import EdmingleApiClient
+from api_scripts.common.models import CollectorStats, RawRecord
+from api_scripts.common.repositories import BronzeRepository
 
 LOGGER = logging.getLogger("warehouse.collector")
 

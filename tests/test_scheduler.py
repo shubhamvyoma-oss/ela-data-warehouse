@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from collectors.runner import collector_registry
+from api_scripts.runner import collector_registry
 
 
 def _load_schedule():
@@ -18,7 +18,7 @@ def _load_schedule():
     return module.load_schedule
 
 
-def test_example_schedule_only_uses_registered_collectors() -> None:
+def test_example_schedule_only_uses_registered_api_scripts() -> None:
     _, jobs = _load_schedule()(Path("services/scheduler/jobs.example.yaml"))
 
     assert {job["collector"] for job in jobs} <= set(collector_registry())

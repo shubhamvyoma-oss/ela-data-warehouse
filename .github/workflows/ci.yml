@@ -18,7 +18,7 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: pip install -r requirements-dev.txt
-      - run: ruff check collectors database manual_imports platform services/scheduler shared tests warehouse_cli.py
+      - run: ruff check api_scripts database manual_imports platform services/scheduler shared tests warehouse_cli.py
       - run: python -m pytest
 
   postgres-integration:

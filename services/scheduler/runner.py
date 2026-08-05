@@ -8,7 +8,7 @@ from typing import Any
 
 import yaml
 
-from collectors.runner import collector_registry, run_collector
+from api_scripts.runner import collector_registry, run_collector
 from shared.config import DatabaseSettings, WarehouseSettings
 from shared.database import Database
 from shared.logging import configure_logging

@@ -6,7 +6,7 @@ ELA Data Warehouse currently accepts only Edmingle webhooks, Edmingle APIs, and 
 
 ## Ingestion
 
-`collectors/` contains one folder per dedicated API job. Each job owns endpoint-specific parameters, pagination, response extraction, and record identity. `collectors/common/` supplies HTTP resilience, rate limiting, audit integration, checkpoint storage, and immutable Bronze writes.
+`api_scripts/` contains one folder per dedicated API job. Each job owns endpoint-specific parameters, pagination, response extraction, and record identity. `api_scripts/common/` supplies HTTP resilience, rate limiting, audit integration, checkpoint storage, and immutable Bronze writes.
 
 `manual_imports/` validates supported files and stores every accepted source row in Bronze with the file hash and row number.
 

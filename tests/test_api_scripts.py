@@ -4,10 +4,10 @@ from collections.abc import Callable
 from types import SimpleNamespace
 from typing import Any
 
-from collectors.attendance.collector import AttendanceCollector
-from collectors.batches.collector import MasterBatchCollector
-from collectors.catalogue.collector import CourseCatalogueCollector
-from collectors.enrollment.collector import EnrollmentCollector
+from api_scripts.attendance.collector import AttendanceCollector
+from api_scripts.batches.collector import MasterBatchCollector
+from api_scripts.catalogue.collector import CourseCatalogueCollector
+from api_scripts.enrollment.collector import EnrollmentCollector
 
 
 class FakeClient:

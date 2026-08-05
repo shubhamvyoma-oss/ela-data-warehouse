@@ -4,10 +4,10 @@ import os
 from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
-from collectors.common.edmingle import require_record_list
-from collectors.common.models import RawRecord, first_value, stable_record_key
-from collectors.common.repositories import utc_iso
-from collectors.common.runtime import CollectorRuntime
+from api_scripts.common.edmingle import require_record_list
+from api_scripts.common.models import RawRecord, first_value, stable_record_key
+from api_scripts.common.repositories import utc_iso
+from api_scripts.common.runtime import CollectorRuntime
 
 IST = timezone(timedelta(hours=5, minutes=30), name="IST")
 

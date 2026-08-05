@@ -5,7 +5,7 @@ from dataclasses import replace
 import pytest
 import requests
 
-from collectors.common.api_client import ApiContractError, ApiRequestError, EdmingleApiClient
+from api_scripts.common.api_client import ApiContractError, ApiRequestError, EdmingleApiClient
 from shared.config import EdmingleSettings
 
 

@@ -15,7 +15,8 @@ def test_migrations_create_required_schemas_and_contracts() -> None:
     assert "audit.events" in migrations
     assert "system.collection_checkpoints" in migrations
     assert "system.api_credentials" in migrations
-    assert "system.collectors" in migrations
+    assert "ALTER TABLE system.collectors RENAME TO api_scripts" in migrations
+    assert "system.api_scripts" in migrations
     assert "monitoring.service_health" in migrations
     assert "bronze.edmingle_api_records" in migrations
     assert "bronze.manual_import_rows" in migrations

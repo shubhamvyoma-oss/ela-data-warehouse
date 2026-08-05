@@ -3,15 +3,15 @@ from __future__ import annotations
 import argparse
 import logging
 
-from collectors.api_key_manager.lifecycle import ApiKeyLifecycle
-from collectors.common.api_client import EdmingleApiClient
-from collectors.common.repositories import (
+from api_scripts.api_key_manager.lifecycle import ApiKeyLifecycle
+from api_scripts.common.api_client import EdmingleApiClient
+from api_scripts.common.repositories import (
     BronzeRepository,
     CheckpointRepository,
     CredentialMetadataRepository,
     RunRepository,
 )
-from collectors.common.runtime import CollectorRuntime
+from api_scripts.common.runtime import CollectorRuntime
 from shared.config import DatabaseSettings, EdmingleSettings, WarehouseSettings
 from shared.database import Database
 from shared.logging import configure_logging
@@ -20,10 +20,10 @@ LOGGER = logging.getLogger("warehouse.runner")
 
 
 def collector_registry():
-    from collectors.attendance.collector import AttendanceCollector
-    from collectors.batches.collector import MasterBatchCollector
-    from collectors.catalogue.collector import CourseCatalogueCollector
-    from collectors.enrollment.collector import EnrollmentCollector
+    from api_scripts.attendance.collector import AttendanceCollector
+    from api_scripts.batches.collector import MasterBatchCollector
+    from api_scripts.catalogue.collector import CourseCatalogueCollector
+    from api_scripts.enrollment.collector import EnrollmentCollector
 
     return {
         "attendance": AttendanceCollector,

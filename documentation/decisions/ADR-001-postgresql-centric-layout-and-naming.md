@@ -6,12 +6,12 @@
 ## Context
 
 The supplied architecture files propose a PostgreSQL-centric data platform, six warehouse
-schemas, dedicated collectors and services, and a durable naming convention. The existing
+schemas, dedicated api_script and services, and a durable naming convention. The existing
 repository already implements the core Bronze runtime but used an older `api_scripts/` layout and
 stored historical audit data inside `system`.
 
 The source files are conceptual and contain conflicts. Examples include `collector_registry`
-versus `collectors`, singular raw-table examples versus the plural-table rule, and both encrypted
+versus `api_script`, singular raw-table examples versus the plural-table rule, and both encrypted
 database credentials and environment-backed secrets.
 
 ## Decision
@@ -19,7 +19,7 @@ database credentials and environment-backed secrets.
 Adopt the stable principles:
 
 - keep the business project and repository name ELA Data Warehouse;
-- use `collectors/`, `services/`, `processing/`, `warehouse/`, `platform/`, `dashboards/`,
+- use `api_script/`, `services/`, `processing/`, `warehouse/`, `platform/`, `dashboards/`,
   `manual_imports/`, `database/`, `docker/`, `shared/`, `documentation/`, and `tests/` as ownership
   boundaries;
 - use PostgreSQL schemas `bronze`, `silver`, `gold`, `system`, `audit`, and `monitoring`;

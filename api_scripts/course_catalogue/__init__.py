@@ -1,0 +1,1 @@
+"""Edmingle course-catalogue collector."""

@@ -1,0 +1,1 @@
+"""Edmingle batch-enrollment collector."""

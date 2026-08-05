@@ -1,36 +1,41 @@
 # Project Standards
 
-## Architecture Principles
+## Architecture
 
-- Keep everything simple.
-- Keep everything modular.
-- One folder has one responsibility.
-- One file has one responsibility.
-- One service has one responsibility.
-- Prefer descriptive names over short names.
-- Avoid unnecessary abstractions.
-- Do not redesign working production code during relocation.
-- Production compatibility is more important than optimization.
-- Build only what is needed now while keeping future growth easy.
+- One folder, module, and service has one clear responsibility.
+- API jobs live in dedicated folders under `api_scripts/`.
+- Shared API mechanics live in `api_scripts/common/`; job-specific request and response logic stays with the job.
+- Webhooks and API jobs only ingest. Business transformations do not run in ingestion code.
+- Bronze is immutable raw data, Silver is validated and standardized, and Gold is business-ready.
+- Operational metadata belongs only in the `system` schema.
+- Business consumers read Gold only.
+- Configuration is externalized; credentials are never stored in code, config templates, logs, audit details, or database metadata.
 
-## Repository Boundaries
+## Data reliability
 
-- Service-specific application code, tests, Docker files, migrations, and documentation stay inside the owning service folder.
-- Platform-wide documentation belongs in `documentation/`.
-- Platform-level Docker assets belong in `docker/`.
-- Shared code belongs in `shared/` only when it is genuinely shared.
-- Generated files, runtime files, secrets, and local environments are not source assets.
+- Every pipeline run receives a stable run identifier and audit trail.
+- Collectors update checkpoints only after their Bronze writes commit.
+- Replaying the same source data must not create duplicate raw versions.
+- Raw payloads must remain available for reprocessing.
+- Failed rows are quarantined with non-sensitive failure metadata.
+- Schema migrations are ordered, checksummed, transactional, and forward-only in production.
 
-## Webhook Service Standards
+## Repository safety
 
-The Edmingle webhook service currently defines its own Python, formatting, linting, Docker, and test configuration in `services/edmingle_webhook/`.
+- Do not commit CSV/XLSX extracts, payloads, runtime checkpoints, logs, dumps, or secrets.
+- Do not connect to production unless explicitly authorized.
+- Do not deploy automatically.
+- Inspect Git status and validate relevant tests before every commit.
+- Keep changes small enough to review and document behavior or operational changes.
 
-Preserve the verified production contract unless a future change is explicitly approved:
+## Webhook compatibility
 
-- `GET /health`
-- `GET /edmingle/webhook`
+Preserve:
+
+- `GET /health` returning `{"status":"running"}`
+- `GET /edmingle/webhook` returning `{"status":"ok"}`
 - `POST /edmingle/webhook`
 - `POST /webhook`
-- Successful writes to `public.webhook_events(source, received_at, raw_payload)`
+- inserts into `public.webhook_events(source, received_at, raw_payload)`
 
-Do not change webhook runtime behavior as part of repository foundation work.
+Never drop, truncate, rename, recreate, or replace `public.webhook_events`.

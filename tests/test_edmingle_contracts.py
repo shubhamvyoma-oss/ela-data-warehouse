@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from api_scripts.common.api_client import ApiContractError
-from api_scripts.common.edmingle import find_record_list, flatten_master_batches, require_record_list
+from collectors.common.api_client import ApiContractError
+from collectors.common.edmingle import find_record_list, flatten_master_batches, require_record_list
 
 
 def test_flatten_master_batches_preserves_raw_batch_and_context() -> None:

@@ -24,6 +24,8 @@ __pycache__
 data
 logs
 backups
-services
+services/*
+!services/scheduler/
+!services/scheduler/**
 tests
 documentation

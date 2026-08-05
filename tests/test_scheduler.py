@@ -4,13 +4,13 @@ from pathlib import Path
 
 import pytest
 
-from api_scripts.runner import collector_registry
+from collectors.runner import collector_registry
 
 
 def _load_schedule():
     import importlib.util
 
-    path = Path("platform/scheduler/runner.py")
+    path = Path("services/scheduler/runner.py")
     spec = importlib.util.spec_from_file_location("warehouse_scheduler", path)
     assert spec and spec.loader
     module = importlib.util.module_from_spec(spec)
@@ -19,10 +19,10 @@ def _load_schedule():
 
 
 def test_example_schedule_only_uses_registered_collectors() -> None:
-    _, jobs = _load_schedule()(Path("platform/scheduler/jobs.example.yaml"))
+    _, jobs = _load_schedule()(Path("services/scheduler/jobs.example.yaml"))
 
     assert {job["collector"] for job in jobs} <= set(collector_registry())
-    assert all(job["enabled"] is False for job in jobs)
+    assert all(job["is_enabled"] is False for job in jobs)
 
 
 def test_schedule_rejects_unknown_collector(tmp_path: Path) -> None:
@@ -32,7 +32,7 @@ def test_schedule_rejects_unknown_collector(tmp_path: Path) -> None:
         "jobs:\n"
         "  - name: bad\n"
         "    collector: imagined\n"
-        "    enabled: true\n"
+        "    is_enabled: true\n"
         "    interval_minutes: 5\n",
         encoding="utf-8",
     )

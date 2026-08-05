@@ -32,7 +32,10 @@ Webhook + API jobs + Manual imports
           Power BI / analytics
 ```
 
-The `system` schema stores operational configuration, audit history, pipeline runs, checkpoints, scheduler state, and non-secret credential metadata. Operational metadata never shares business tables.
+PostgreSQL is the authoritative operational and analytical store. The `system` schema stores
+configuration and registries, `audit` stores immutable execution history, and `monitoring` stores
+current health state. These operational domains never share business tables with Bronze, Silver,
+or Gold. Secret values remain in runtime secret storage rather than PostgreSQL.
 
 ## Engineering principles
 

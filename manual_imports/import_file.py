@@ -12,8 +12,8 @@ from typing import Any
 from openpyxl import load_workbook
 from psycopg2.extras import Json, execute_values
 
-from api_scripts.common.models import payload_sha256
-from api_scripts.common.repositories import RunRepository
+from collectors.common.models import payload_sha256
+from collectors.common.repositories import RunRepository
 from shared.config import DatabaseSettings, WarehouseSettings
 from shared.database import Database
 from shared.logging import configure_logging
@@ -140,10 +140,10 @@ def import_file(
         with database.transaction() as connection, connection.cursor() as cursor:
             cursor.execute(
                 """
-                INSERT INTO system.manual_import_files (
-                    import_id, run_id, source_name, original_filename, file_sha256,
+                INSERT INTO audit.manual_imports (
+                    id, run_id, source_name, original_filename, file_sha256,
                     file_size_bytes, status
-                ) VALUES (%s, %s, %s, %s, %s, %s, 'validating')
+                ) VALUES (%s, %s, %s, %s, %s, %s, 'VALIDATING')
                 """,
                 (import_id, run_id, source_name, path.name, checksum, path.stat().st_size),
             )
@@ -170,9 +170,9 @@ def import_file(
         with database.transaction() as connection, connection.cursor() as cursor:
             cursor.execute(
                 """
-                UPDATE system.manual_import_files
-                SET status = 'loaded', rows_read = %s, rows_loaded = %s
-                WHERE import_id = %s
+                UPDATE audit.manual_imports
+                SET status = 'LOADED', rows_read = %s, rows_loaded = %s
+                WHERE id = %s
                 """,
                 (rows_read, rows_written, import_id),
             )
@@ -184,15 +184,16 @@ def import_file(
             rows_written=rows_written,
             rows_rejected=0,
             checkpoint_after={"file_sha256": checksum, "import_id": str(import_id)},
+            request_count=0,
         )
         return import_id
     except Exception as exc:
         with database.transaction() as connection, connection.cursor() as cursor:
             cursor.execute(
                 """
-                UPDATE system.manual_import_files
-                SET status = 'failed', rows_read = %s, rows_loaded = %s
-                WHERE import_id = %s
+                UPDATE audit.manual_imports
+                SET status = 'FAILED', rows_read = %s, rows_loaded = %s
+                WHERE id = %s
                 """,
                 (rows_read, rows_written, import_id),
             )
@@ -204,6 +205,7 @@ def import_file(
             rows_written=rows_written,
             rows_rejected=0,
             checkpoint_after={},
+            request_count=0,
             error_category=type(exc).__name__,
         )
         raise
@@ -215,10 +217,10 @@ def _write_batch(database: Database, batch: list[tuple[Any, ...]]) -> int:
             cursor,
             """
             INSERT INTO bronze.manual_import_rows (
-                import_id, pipeline_run_id, source_name, source_row_number, row_sha256, raw_row
+                import_id, pipeline_run_id, source_name, source_row_number, row_sha256, raw_payload
             ) VALUES %s
             ON CONFLICT DO NOTHING
-            RETURNING bronze_row_id
+            RETURNING id
             """,
             batch,
             page_size=500,

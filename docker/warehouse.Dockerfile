@@ -11,11 +11,12 @@ RUN addgroup --system warehouse && adduser --system --ingroup warehouse warehous
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY api_scripts ./api_scripts
+COPY collectors ./collectors
 COPY database ./database
 COPY manual_imports ./manual_imports
 COPY platform ./platform
 COPY processing ./processing
+COPY services/scheduler ./services/scheduler
 COPY shared ./shared
 COPY warehouse_cli.py ./warehouse_cli.py
 
@@ -24,4 +25,4 @@ RUN mkdir -p /app/data/imports /app/logs \
 
 USER warehouse
 
-CMD ["python", "platform/scheduler/runner.py"]
+CMD ["python", "services/scheduler/runner.py"]

@@ -7,8 +7,10 @@ This component replaces the legacy Flask webhook receiver in a staged migration.
 - Port: `5100`
 - `GET /health` returns `{"status":"running"}`
 - `GET /edmingle/webhook` returns `{"status":"ok"}`
+- `OPTIONS /edmingle/webhook` returns `{"status":"ok"}` for validator compatibility
 - `POST /edmingle/webhook` receives events
 - `POST /webhook` is an optional compatibility alias
+- `/edmingle/webhook` accepts both forms with and without a trailing slash
 - Successful writes use `public.webhook_events(source, received_at, raw_payload)`
 
 The HTTP request path stores the full JSON payload and does not route directly to Silver. Warehouse synchronization and Silver routing are downstream boundaries.

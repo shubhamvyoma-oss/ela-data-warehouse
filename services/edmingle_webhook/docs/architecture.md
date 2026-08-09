@@ -12,6 +12,11 @@ POST /edmingle/webhook
 POST /webhook
 ```
 
+Validation also returns JSON for `OPTIONS /edmingle/webhook`, and the Edmingle
+endpoint accepts both forms with and without a trailing slash. This prevents
+third-party validation probes from receiving Flask's default empty or HTML
+responses.
+
 The existing `public.webhook_events` table remains the authoritative event store. The `/webhook` POST route is a compatibility alias that uses the same internal handler as `/edmingle/webhook`. A persistent JSONL queue protects accepted events during database outages.
 
 ## Runtime Components

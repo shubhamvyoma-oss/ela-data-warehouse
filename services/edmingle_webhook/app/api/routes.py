@@ -25,12 +25,26 @@ def register_routes(app: Flask) -> None:
         response.headers["Referrer-Policy"] = "no-referrer"
         return response
 
-    @app.get("/edmingle/webhook")
+    @app.route(
+        "/edmingle/webhook",
+        methods=["GET", "OPTIONS"],
+        strict_slashes=False,
+    )
     def verify_webhook() -> tuple[Response, int]:
         return jsonify({"status": "ok"}), 200
 
-    @app.post("/edmingle/webhook")
-    @app.post("/webhook")
+    @app.route(
+        "/edmingle/webhook",
+        methods=["POST"],
+        strict_slashes=False,
+        provide_automatic_options=False,
+    )
+    @app.route(
+        "/webhook",
+        methods=["POST"],
+        strict_slashes=False,
+        provide_automatic_options=False,
+    )
     def receive_webhook() -> tuple[Response, int]:
         settings: Settings = current_app.extensions["settings"]
         metrics: MetricsRegistry = current_app.extensions["metrics"]
@@ -73,6 +87,10 @@ def register_routes(app: Flask) -> None:
             status_code,
         )
 
+    @app.route("/webhook", methods=["OPTIONS"], strict_slashes=False)
+    def webhook_alias_options() -> tuple[Response, int]:
+        return jsonify({"status": "ok"}), 200
+
     @app.get("/live")
     def live() -> tuple[Response, int]:
         return jsonify({"status": "live"}), 200
@@ -107,6 +125,22 @@ def register_routes(app: Flask) -> None:
         metrics: MetricsRegistry = current_app.extensions["metrics"]
         summary = ReplayEngine(settings, database, queue, metrics).run_once()
         return jsonify(summary.to_dict()), 200
+
+    @app.errorhandler(404)
+    def not_found(_error: Exception) -> tuple[Response, int]:
+        return jsonify({"error": "not found"}), 404
+
+    @app.errorhandler(405)
+    def method_not_allowed(_error: Exception) -> tuple[Response, int]:
+        return jsonify({"error": "method not allowed"}), 405
+
+    @app.errorhandler(413)
+    def payload_too_large(_error: Exception) -> tuple[Response, int]:
+        return jsonify({"error": "payload too large"}), 413
+
+    @app.errorhandler(500)
+    def internal_error(_error: Exception) -> tuple[Response, int]:
+        return jsonify({"error": "internal server error"}), 500
 
 
 def _health_checker() -> HealthChecker:

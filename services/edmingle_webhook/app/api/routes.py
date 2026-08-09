@@ -23,6 +23,17 @@ def register_routes(app: Flask) -> None:
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["Referrer-Policy"] = "no-referrer"
+        if request.path.rstrip("/") in {"/edmingle/webhook", "/webhook"}:
+            logger.info(
+                "webhook http response",
+                extra={
+                    "method": request.method,
+                    "path": request.path,
+                    "status_code": response.status_code,
+                    "response_content_type": response.content_type,
+                    "remote_addr": _client_address(),
+                },
+            )
         return response
 
     @app.route(
@@ -51,7 +62,7 @@ def register_routes(app: Flask) -> None:
         rate_limiter: InMemoryRateLimiter = current_app.extensions["rate_limiter"]
         webhook_service = current_app.extensions["webhook_service"]
 
-        remote_addr = request.headers.get("X-Forwarded-For", request.remote_addr or "unknown").split(",")[0].strip()
+        remote_addr = _client_address()
         if not rate_limiter.allow(remote_addr):
             metrics.increment("rate_limited_requests")
             return jsonify({"status": "rate_limited"}), 429
@@ -149,3 +160,7 @@ def _health_checker() -> HealthChecker:
         current_app.extensions["database"],
         current_app.extensions["queue"],
     )
+
+
+def _client_address() -> str:
+    return request.headers.get("X-Forwarded-For", request.remote_addr or "unknown").split(",")[0].strip()

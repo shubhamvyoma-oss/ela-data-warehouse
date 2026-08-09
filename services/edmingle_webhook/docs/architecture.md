@@ -171,6 +171,8 @@ The long-running replay worker sleeps for `REPLAY_BACKOFF_SECONDS` between runs 
 - `metrics.log`
 
 Logs are JSON by default. File handlers rotate by size and compress rotated files with gzip.
+Webhook request metadata logs include only method, path, response status, response content type,
+and client address. Query strings, headers, and request bodies are excluded.
 
 ## Monitoring Architecture
 

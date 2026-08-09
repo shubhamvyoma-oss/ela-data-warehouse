@@ -49,6 +49,29 @@ def test_options_edmingle_webhook_validation_returns_json(settings):
     assert response.get_json() == {"status": "ok"}
 
 
+def test_webhook_request_metadata_is_logged_without_payload(settings, monkeypatch):
+    records = []
+    monkeypatch.setattr(
+        "app.api.routes.logger.info",
+        lambda message, *, extra: records.append((message, extra)),
+    )
+
+    response = _client(settings).options(
+        "/edmingle/webhook",
+        headers={"X-Forwarded-For": "203.0.113.10", "X-Diagnostic-Secret": "must-not-be-logged"},
+    )
+
+    message, metadata = records[0]
+    assert response.status_code == 200
+    assert message == "webhook http response"
+    assert metadata["method"] == "OPTIONS"
+    assert metadata["path"] == "/edmingle/webhook"
+    assert metadata["status_code"] == 200
+    assert metadata["response_content_type"].startswith("application/json")
+    assert metadata["remote_addr"] == "203.0.113.10"
+    assert "must-not-be-logged" not in str(metadata)
+
+
 def test_options_edmingle_webhook_validation_accepts_trailing_slash(settings):
     response = _client(settings).options("/edmingle/webhook/")
 

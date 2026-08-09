@@ -11,7 +11,7 @@ The repository currently includes unit tests for:
 | `tests/test_auth.py` | Shared-secret auth, invalid secret rejection, HMAC auth |
 | `tests/test_validation.py` | Valid JSON, malformed JSON, non-JSON content type |
 | `tests/test_queue.py` | JSONL queue write/read and queue stats |
-| `tests/test_routes.py` | Endpoint compatibility, invalid-payload no-op behavior, database/queue response decisions |
+| `tests/test_routes.py` | Endpoint compatibility, JSON validation/error responses, trailing-slash handling, invalid-payload no-op behavior, database/queue response decisions |
 | `tests/test_replay.py` | Replay success, retry, dead-letter, atomic claiming, stale claim recovery, corrupt queue files |
 | `tests/test_webhook_service.py` | Store orchestration, queue fallback, duplicate handling, concurrent duplicate handling |
 

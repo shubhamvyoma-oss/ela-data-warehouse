@@ -133,6 +133,8 @@ curl -fsS http://127.0.0.1:5100/live
 curl -fsS http://127.0.0.1:5100/health
 curl -fsS http://127.0.0.1:5100/ready
 curl -fsS http://127.0.0.1:5100/metrics
+curl -fsS -X OPTIONS http://127.0.0.1:5100/edmingle/webhook
+curl -fsS http://127.0.0.1:5100/edmingle/webhook/
 ```
 
 Expected:
@@ -141,6 +143,8 @@ Expected:
 - `/health` returns `{"status":"running"}` with HTTP 200 for production compatibility.
 - `/ready` returns `200` only when PostgreSQL is reachable.
 - `/metrics` returns Prometheus text format.
+- Webhook validation returns `200 {"status":"ok"}` for GET and OPTIONS,
+  including the trailing-slash form.
 
 ## Controlled Webhook Test
 

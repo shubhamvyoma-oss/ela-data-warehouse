@@ -33,6 +33,38 @@ def test_get_edmingle_webhook_validation(settings):
     assert response.get_json() == {"status": "ok"}
 
 
+def test_get_edmingle_webhook_validation_accepts_trailing_slash(settings):
+    response = _client(settings).get("/edmingle/webhook/")
+
+    assert response.status_code == 200
+    assert response.is_json
+    assert response.get_json() == {"status": "ok"}
+
+
+def test_options_edmingle_webhook_validation_returns_json(settings):
+    response = _client(settings).options("/edmingle/webhook")
+
+    assert response.status_code == 200
+    assert response.is_json
+    assert response.get_json() == {"status": "ok"}
+
+
+def test_options_edmingle_webhook_validation_accepts_trailing_slash(settings):
+    response = _client(settings).options("/edmingle/webhook/")
+
+    assert response.status_code == 200
+    assert response.is_json
+    assert response.get_json() == {"status": "ok"}
+
+
+def test_options_webhook_alias_returns_json(settings):
+    response = _client(settings).options("/webhook")
+
+    assert response.status_code == 200
+    assert response.is_json
+    assert response.get_json() == {"status": "ok"}
+
+
 def test_health_preserves_live_contract(settings):
     response = _client(settings).get("/health")
 
@@ -54,6 +86,17 @@ def test_post_edmingle_webhook_success(settings):
 def test_post_webhook_alias_uses_same_handler(settings):
     service = FakeWebhookService()
     response = _client(settings, service).post("/webhook", json={"event_id": "evt-2", "event": "user.user_created"})
+
+    assert response.status_code == 200
+    assert response.get_json()["status"] == "stored"
+    assert service.calls == 1
+
+
+def test_post_edmingle_webhook_accepts_trailing_slash(settings):
+    service = FakeWebhookService()
+    response = _client(settings, service).post(
+        "/edmingle/webhook/", json={"event_id": "evt-slash", "event": "user.user_created"}
+    )
 
     assert response.status_code == 200
     assert response.get_json()["status"] == "stored"
@@ -136,3 +179,31 @@ def test_total_failure_status_can_be_500(settings):
     )
 
     assert response.status_code == 500
+
+
+def test_not_found_returns_json(settings):
+    response = _client(settings).get("/missing")
+
+    assert response.status_code == 404
+    assert response.is_json
+    assert response.get_json() == {"error": "not found"}
+
+
+def test_method_not_allowed_returns_json(settings):
+    response = _client(settings).delete("/edmingle/webhook")
+
+    assert response.status_code == 405
+    assert response.is_json
+    assert response.get_json() == {"error": "method not allowed"}
+
+
+def test_payload_too_large_returns_json(settings):
+    response = _client(settings).post(
+        "/edmingle/webhook",
+        data=b"x" * (settings.max_payload_bytes + 1),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 413
+    assert response.is_json
+    assert response.get_json() == {"error": "payload too large"}

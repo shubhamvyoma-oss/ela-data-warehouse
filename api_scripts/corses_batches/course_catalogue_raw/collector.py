@@ -19,7 +19,7 @@ class CourseCatalogueRawCollector:
     see bronze.course_catalogue_raw and this folder's README for details.
     """
 
-    name = "course_catalogue_raw"
+    name = "corses_batches.course_catalogue_raw"
     checkpoint_partition_key = "default"
 
     def run(self, runtime: CollectorRuntime, checkpoint: dict[str, Any]) -> None:

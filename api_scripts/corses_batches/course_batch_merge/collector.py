@@ -53,7 +53,7 @@ class CourseBatchMergeCollector:
     table -- see TransformedTableRepository), matching the original script's
     behavior of regenerating the entire CSV from scratch each run."""
 
-    name = "course_batch_merge"
+    name = "corses_batches.course_batch_merge"
     checkpoint_partition_key = "default"
 
     def run(self, runtime: CollectorRuntime, checkpoint: dict[str, Any]) -> None:

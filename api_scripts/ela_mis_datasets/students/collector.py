@@ -74,7 +74,7 @@ class StudentsCollector:
     simply re-fetches from page 1 and re-upserts. See README.md for details.
     """
 
-    name = "students"
+    name = "ela_mis_datasets.students"
     checkpoint_partition_key = "default"
 
     def run(self, runtime: CollectorRuntime, checkpoint: dict[str, Any]) -> None:

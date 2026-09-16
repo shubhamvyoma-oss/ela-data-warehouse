@@ -88,7 +88,7 @@ class ClassIdLookupCollector:
     bronze.course_catalog -- see README.md.
     """
 
-    name = "class_id_lookup"
+    name = "attendance_data.class_id_lookup"
     checkpoint_partition_key = "default"
 
     def run(self, runtime: CollectorRuntime, checkpoint: dict[str, Any]) -> None:

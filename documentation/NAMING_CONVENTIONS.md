@@ -33,12 +33,36 @@ ESD-01.4 convention and resolves conflicts found across the conceptual architect
 
 ## Confirmed collector names
 
-| Collector | Folder | Bronze resource |
+`api_scripts/` has exactly six top-level folders, one per original legacy
+script folder the extract/transform logic was ported from. A folder that
+covers more than one job nests each job in its own subfolder with a
+`parent.job` registry name; a folder with exactly one job keeps a plain name.
+
+| Collector | Folder | Bronze table |
 | --- | --- | --- |
-| Attendance | `api_scripts/attendance/` | `attendance_records` |
-| Enrollment | `api_scripts/enrollment/` | `student_enrollments` |
-| Batches | `api_scripts/batches/` | `batches` |
-| Catalogue | `api_scripts/catalogue/` | `courses` |
+| `attendance` | `api_scripts/attendance/` | `report55_batch_attendance_summary`, `report55_session_attendance` |
+| `attendance_data.catalogue` | `api_scripts/attendance_data/catalogue/` | `course_catalog` |
+| `attendance_data.class_id_lookup` | `api_scripts/attendance_data/class_id_lookup/` | `class_id_lookup` |
+| `attendance_data.class_session_attendance` | `api_scripts/attendance_data/class_session_attendance/` | `class_session_attendance` |
+| `corses_batches.course_batch_merge` | `api_scripts/corses_batches/course_batch_merge/` | `course_batch_merge` |
+| `corses_batches.course_catalogue_raw` | `api_scripts/corses_batches/course_catalogue_raw/` | `course_catalogue_raw` |
+| `ela_mis_datasets.students` | `api_scripts/ela_mis_datasets/students/` | `students` |
+| `ela_mis_datasets.course_enrollments` | `api_scripts/ela_mis_datasets/course_enrollments/` | `course_enrollments` |
+| `enrollment_reports` | `api_scripts/enrollments_reports/` | `enrollment_reports` |
+
+`api_scripts/edmingle_api_key_generator/` (the sixth legacy folder) is not a
+Bronze-writing collector -- it generates and emails a new Edmingle API key,
+see its own README. The pre-existing `api_scripts/api_key_manager/` folder
+(key lifecycle/expiry checks) predates this port and isn't one of the six.
+
+The original four raw-ingestion collectors this project started with
+(`attendance` -> `attendance_records`, `enrollment` -> `student_enrollments`,
+`batches` -> `batches`, `catalogue` -> `courses`, all writing into the single
+generic `bronze.edmingle_api_records` table) were replaced or retired when
+the six legacy folders were ported -- `attendance` and `catalogue` were
+replaced by the richer versions above; `batches` and `enrollment` were
+retired (their `system.api_scripts` rows are marked disabled, not deleted,
+per the audit-everything rule).
 
 ## Compatibility exceptions
 

@@ -3,7 +3,7 @@
 Ports the standalone legacy scripts (`edmingle_generate_api_key.py`,
 `edmingle_api_key_email.py`, `edmingle_api_key_settings.py`) into this
 warehouse so key generation can be scripted going forward instead of run by
-hand from a laptop. `api_key_manager/README.md` previously deferred
+hand from a laptop. `../api_key_manager/README.md` previously deferred
 automated generation "until the key-generation endpoint, authentication
 contract, and redacted response sample are supplied"; the legacy script is
 that confirmed contract (it has been exercised against the real endpoint),
@@ -15,7 +15,7 @@ CRITICAL -- the generated API key value must never be logged, printed,
 persisted to the database, written to a file, or otherwise retained by this
 codebase. It lives only in a local variable for the few lines between the
 login call and the email send, and is discarded immediately after.  See
-api_key_manager/README.md: "API key values must never be stored in
+../api_key_manager/README.md: "API key values must never be stored in
 PostgreSQL, logs, audit events, YAML, or Git." The database write this
 module performs carries only lifecycle metadata (expires_at, status) --
 never the key itself.
@@ -43,7 +43,7 @@ from api_scripts.common.repositories import CredentialMetadataRepository
 from shared.config import DatabaseSettings
 from shared.database import Database
 
-LOGGER = logging.getLogger("warehouse.api_key_manager.generate")
+LOGGER = logging.getLogger("warehouse.edmingle_api_key_generator.generate")
 
 _USER_AGENT = "ela-data-warehouse-api-key-generator/1.0"
 _LOGIN_TIMEOUT_SECONDS = 30

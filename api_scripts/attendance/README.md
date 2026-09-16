@@ -183,7 +183,7 @@ but `run_collector()` constructs `CollectorRuntime` with only `bronze=BronzeRepo
 and no `transformed=TransformedTableRepository(database)`. Calling `commit_rows(...)` (as this
 version now does, for both tables) against that runtime raises
 `RuntimeError("CollectorRuntime was constructed without a TransformedTableRepository")`. This
-mirrors the same gap already called out in `api_scripts/students/README.md` and is left for the
+mirrors the same gap already called out in `api_scripts/ela_mis_datasets/students/README.md` and is left for the
 shared wiring step that enables all `commit_rows`-based jobs end-to-end -- out of scope for this
 change, which touches only `collector.py` and this README.
 

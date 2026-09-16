@@ -7,15 +7,21 @@ from api_scripts.runner import collector_registry
 
 def test_repository_uses_frozen_component_layout() -> None:
     required = {
+        # api_scripts/ has exactly six top-level folders, one per original
+        # legacy source folder the extract/transform logic was ported from.
         "api_scripts/attendance",
-        "api_scripts/catalogue",
-        "api_scripts/class_id_lookup",
-        "api_scripts/class_session_attendance",
-        "api_scripts/course_batch_merge",
-        "api_scripts/course_catalogue_raw",
-        "api_scripts/course_enrollments",
-        "api_scripts/enrollment_reports",
-        "api_scripts/students",
+        "api_scripts/attendance_data",
+        "api_scripts/attendance_data/catalogue",
+        "api_scripts/attendance_data/class_id_lookup",
+        "api_scripts/attendance_data/class_session_attendance",
+        "api_scripts/corses_batches",
+        "api_scripts/corses_batches/course_batch_merge",
+        "api_scripts/corses_batches/course_catalogue_raw",
+        "api_scripts/edmingle_api_key_generator",
+        "api_scripts/ela_mis_datasets",
+        "api_scripts/ela_mis_datasets/students",
+        "api_scripts/ela_mis_datasets/course_enrollments",
+        "api_scripts/enrollments_reports",
         "services/edmingle_webhook",
         "services/scheduler",
         "processing/silver",
@@ -30,8 +36,10 @@ def test_repository_uses_frozen_component_layout() -> None:
     assert not Path("collectors").exists()
     assert not Path("platform/scheduler").exists()
 
-    # ADR-002: these placeholder-only folders were consolidated into
-    # ROADMAP.md and must not come back as empty directories.
+    # These flat, single-job folder names must NOT exist anymore -- they
+    # were moved under their parent source-folder (see git history / the
+    # session that did this move) so each of the six original legacy
+    # folders maps to exactly one api_scripts/ folder.
     removed = {
         "platform",
         "warehouse",
@@ -44,6 +52,14 @@ def test_repository_uses_frozen_component_layout() -> None:
         "services/notification",
         "docker/monitoring",
         "docker/nginx",
+        "api_scripts/catalogue",
+        "api_scripts/class_id_lookup",
+        "api_scripts/class_session_attendance",
+        "api_scripts/course_batch_merge",
+        "api_scripts/course_catalogue_raw",
+        "api_scripts/students",
+        "api_scripts/course_enrollments",
+        "api_scripts/enrollment_reports",
     }
     assert not any(Path(path).exists() for path in removed)
 
@@ -51,14 +67,14 @@ def test_repository_uses_frozen_component_layout() -> None:
 def test_collector_registry_uses_confirmed_names() -> None:
     assert set(collector_registry()) == {
         "attendance",
-        "catalogue",
-        "class_id_lookup",
-        "class_session_attendance",
-        "course_batch_merge",
-        "course_catalogue_raw",
-        "course_enrollments",
+        "attendance_data.catalogue",
+        "attendance_data.class_id_lookup",
+        "attendance_data.class_session_attendance",
+        "corses_batches.course_batch_merge",
+        "corses_batches.course_catalogue_raw",
+        "ela_mis_datasets.students",
+        "ela_mis_datasets.course_enrollments",
         "enrollment_reports",
-        "students",
     }
 
 

@@ -16,15 +16,15 @@ from api_scripts.attendance.collector import (
     SESSION_TABLE,
     AttendanceCollector,
 )
-from api_scripts.catalogue.collector import CourseCatalogueCollector
-from api_scripts.class_id_lookup.collector import ClassIdLookupCollector
-from api_scripts.class_session_attendance.collector import ClassSessionAttendanceCollector
-from api_scripts.course_batch_merge.collector import CourseBatchMergeCollector
-from api_scripts.course_catalogue_raw.collector import CourseCatalogueRawCollector
-from api_scripts.course_enrollments.collector import CourseEnrollmentsCollector
-from api_scripts.enrollment_reports.collector import build_chunks
+from api_scripts.attendance_data.catalogue.collector import CourseCatalogueCollector
+from api_scripts.attendance_data.class_id_lookup.collector import ClassIdLookupCollector
+from api_scripts.attendance_data.class_session_attendance.collector import ClassSessionAttendanceCollector
+from api_scripts.corses_batches.course_batch_merge.collector import CourseBatchMergeCollector
+from api_scripts.corses_batches.course_catalogue_raw.collector import CourseCatalogueRawCollector
+from api_scripts.ela_mis_datasets.course_enrollments.collector import CourseEnrollmentsCollector
+from api_scripts.enrollments_reports.collector import build_chunks
 from api_scripts.runner import collector_registry
-from api_scripts.students.collector import StudentsCollector
+from api_scripts.ela_mis_datasets.students.collector import StudentsCollector
 
 
 class FakeClient:
@@ -289,7 +289,7 @@ def test_catalogue_fetches_active_and_completed_only_and_excludes_bad_batch_ids(
 
     CourseCatalogueCollector().run(runtime, {})
 
-    assert CourseCatalogueCollector.name == "catalogue"
+    assert CourseCatalogueCollector.name == "attendance_data.catalogue"
 
     masterbatch_calls = [(p, params) for p, params in client.calls if p == "/short/masterbatch"]
     statuses_called = sorted(params["status"] for _p, params in masterbatch_calls)
@@ -398,7 +398,7 @@ def test_course_batch_merge_fetches_all_statuses_and_filters_test_batches_and_co
 
     CourseBatchMergeCollector().run(runtime, {})
 
-    assert CourseBatchMergeCollector.name == "course_batch_merge"
+    assert CourseBatchMergeCollector.name == "corses_batches.course_batch_merge"
 
     masterbatch_calls = [(p, params) for p, params in client.calls if p == "/short/masterbatch"]
     statuses_called = sorted(params["status"] for _p, params in masterbatch_calls)
@@ -436,7 +436,7 @@ def test_course_catalogue_raw_flattens_and_hashes_rows() -> None:
 
     CourseCatalogueRawCollector().run(runtime, {})
 
-    assert CourseCatalogueRawCollector.name == "course_catalogue_raw"
+    assert CourseCatalogueRawCollector.name == "corses_batches.course_catalogue_raw"
 
     assert client.calls == [
         ("/institute/683/courses/catalogue", {"institution_id": "683"})
@@ -515,7 +515,7 @@ def test_students_paginates_until_empty_page_and_extracts_custom_fields() -> Non
 
     StudentsCollector().run(runtime, {})
 
-    assert StudentsCollector.name == "students"
+    assert StudentsCollector.name == "ela_mis_datasets.students"
 
     assert [params["page"] for _p, params in client.calls] == [1, 2]
 
@@ -554,7 +554,7 @@ def test_enrollment_reports_build_chunks_splits_by_chunk_days() -> None:
 
 
 def test_enrollment_reports_name_and_registry_match() -> None:
-    from api_scripts.enrollment_reports.collector import EnrollmentReportsCollector
+    from api_scripts.enrollments_reports.collector import EnrollmentReportsCollector
 
     assert EnrollmentReportsCollector.name == "enrollment_reports"
     assert EnrollmentReportsCollector.checkpoint_partition_key == "default"
@@ -575,9 +575,9 @@ def test_enrollment_reports_name_and_registry_match() -> None:
 # ═══════════════════════════════════════════════════════════════════
 
 _DB_DEPENDENT_COLLECTORS = {
-    "class_id_lookup": ClassIdLookupCollector,
-    "course_enrollments": CourseEnrollmentsCollector,
-    "class_session_attendance": ClassSessionAttendanceCollector,
+    "attendance_data.class_id_lookup": ClassIdLookupCollector,
+    "ela_mis_datasets.course_enrollments": CourseEnrollmentsCollector,
+    "attendance_data.class_session_attendance": ClassSessionAttendanceCollector,
 }
 
 

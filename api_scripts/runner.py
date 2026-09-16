@@ -22,25 +22,31 @@ LOGGER = logging.getLogger("warehouse.runner")
 
 def collector_registry():
     from api_scripts.attendance.collector import AttendanceCollector
-    from api_scripts.catalogue.collector import CourseCatalogueCollector
-    from api_scripts.class_id_lookup.collector import ClassIdLookupCollector
-    from api_scripts.class_session_attendance.collector import ClassSessionAttendanceCollector
-    from api_scripts.course_batch_merge.collector import CourseBatchMergeCollector
-    from api_scripts.course_catalogue_raw.collector import CourseCatalogueRawCollector
-    from api_scripts.course_enrollments.collector import CourseEnrollmentsCollector
-    from api_scripts.enrollment_reports.collector import EnrollmentReportsCollector
-    from api_scripts.students.collector import StudentsCollector
+    from api_scripts.attendance_data.catalogue.collector import CourseCatalogueCollector
+    from api_scripts.attendance_data.class_id_lookup.collector import ClassIdLookupCollector
+    from api_scripts.attendance_data.class_session_attendance.collector import (
+        ClassSessionAttendanceCollector,
+    )
+    from api_scripts.corses_batches.course_batch_merge.collector import CourseBatchMergeCollector
+    from api_scripts.corses_batches.course_catalogue_raw.collector import (
+        CourseCatalogueRawCollector,
+    )
+    from api_scripts.ela_mis_datasets.course_enrollments.collector import (
+        CourseEnrollmentsCollector,
+    )
+    from api_scripts.ela_mis_datasets.students.collector import StudentsCollector
+    from api_scripts.enrollments_reports.collector import EnrollmentReportsCollector
 
     return {
         "attendance": AttendanceCollector,
-        "catalogue": CourseCatalogueCollector,
-        "class_id_lookup": ClassIdLookupCollector,
-        "class_session_attendance": ClassSessionAttendanceCollector,
-        "course_batch_merge": CourseBatchMergeCollector,
-        "course_catalogue_raw": CourseCatalogueRawCollector,
-        "course_enrollments": CourseEnrollmentsCollector,
+        "attendance_data.catalogue": CourseCatalogueCollector,
+        "attendance_data.class_id_lookup": ClassIdLookupCollector,
+        "attendance_data.class_session_attendance": ClassSessionAttendanceCollector,
+        "corses_batches.course_batch_merge": CourseBatchMergeCollector,
+        "corses_batches.course_catalogue_raw": CourseCatalogueRawCollector,
+        "ela_mis_datasets.students": StudentsCollector,
+        "ela_mis_datasets.course_enrollments": CourseEnrollmentsCollector,
         "enrollment_reports": EnrollmentReportsCollector,
-        "students": StudentsCollector,
     }
 
 

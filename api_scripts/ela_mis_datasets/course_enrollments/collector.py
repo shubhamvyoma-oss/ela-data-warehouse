@@ -110,7 +110,7 @@ class CourseEnrollmentsCollector:
     instead of re-deriving the list itself.
     """
 
-    name = "course_enrollments"
+    name = "ela_mis_datasets.course_enrollments"
     checkpoint_partition_key = "default"
 
     def run(self, runtime: CollectorRuntime, checkpoint: dict[str, Any]) -> None:

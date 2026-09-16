@@ -185,7 +185,7 @@ class ClassSessionAttendanceCollector:
     bronze.class_id_lookup -- see README.md.
     """
 
-    name = "class_session_attendance"
+    name = "attendance_data.class_session_attendance"
     checkpoint_partition_key = "default"
 
     def run(self, runtime: CollectorRuntime, checkpoint: dict[str, Any]) -> None:

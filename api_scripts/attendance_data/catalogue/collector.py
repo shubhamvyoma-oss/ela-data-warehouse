@@ -64,7 +64,7 @@ class CourseCatalogueCollector:
     see TransformedTableRepository), matching the original script's
     behavior of regenerating the entire CSV from scratch each run."""
 
-    name = "catalogue"
+    name = "attendance_data.catalogue"
     checkpoint_partition_key = "default"
 
     def run(self, runtime: CollectorRuntime, checkpoint: dict[str, Any]) -> None:

@@ -7,7 +7,7 @@ This fills the previously-reserved `students/` job folder. It is one half of the
 `edmingle_student_course_sync.py` script (formerly run standalone on the VPS): that script did
 two things in one ~68-80 hour run -- sync the student roster, then walk every student to pull
 course/class attendance. This job ports only the **student roster** half. The **course /
-enrollment** half is ported separately into `api_scripts/course_enrollments/` as its own job.
+enrollment** half is ported separately into `api_scripts/ela_mis_datasets/course_enrollments/` as its own job.
 
 ## Response contract
 

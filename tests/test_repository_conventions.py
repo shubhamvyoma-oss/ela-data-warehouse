@@ -18,20 +18,34 @@ def test_repository_uses_frozen_component_layout() -> None:
         "api_scripts/students",
         "services/edmingle_webhook",
         "services/scheduler",
-        "processing/bronze",
         "processing/silver",
         "processing/gold",
-        "warehouse/bronze",
-        "warehouse/silver",
-        "warehouse/gold",
-        "dashboards/backend",
-        "dashboards/frontend",
         "docker/compose/development.yml",
+        "ROADMAP.md",
+        "documentation/decisions/ADR-002-consolidate-placeholder-folders.md",
+        "shared/preflight_cli.py",
     }
 
     assert all(Path(path).exists() for path in required)
     assert not Path("collectors").exists()
     assert not Path("platform/scheduler").exists()
+
+    # ADR-002: these placeholder-only folders were consolidated into
+    # ROADMAP.md and must not come back as empty directories.
+    removed = {
+        "platform",
+        "warehouse",
+        "dashboards",
+        "processing/bronze",
+        "processing/quality",
+        "processing/replay",
+        "processing/validation",
+        "services/monitoring",
+        "services/notification",
+        "docker/monitoring",
+        "docker/nginx",
+    }
+    assert not any(Path(path).exists() for path in removed)
 
 
 def test_collector_registry_uses_confirmed_names() -> None:

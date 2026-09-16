@@ -105,10 +105,6 @@ class Settings:
     replay_batch_size: int
     replay_max_attempts: int
     replay_backoff_seconds: int
-    alert_console_enabled: bool
-    slack_webhook_url: str
-    discord_webhook_url: str
-    teams_webhook_url: str
 
     @classmethod
     def from_environment(cls) -> Settings:
@@ -170,10 +166,6 @@ class Settings:
             replay_batch_size=_read_int("REPLAY_BATCH_SIZE", 100, 1, 10000),
             replay_max_attempts=_read_int("REPLAY_MAX_ATTEMPTS", 10, 1, 100),
             replay_backoff_seconds=_read_int("REPLAY_BACKOFF_SECONDS", 30, 1, 86400),
-            alert_console_enabled=_read_bool("ALERT_CONSOLE_ENABLED", True),
-            slack_webhook_url=_read_text("SLACK_WEBHOOK_URL", ""),
-            discord_webhook_url=_read_text("DISCORD_WEBHOOK_URL", ""),
-            teams_webhook_url=_read_text("TEAMS_WEBHOOK_URL", ""),
         )
         settings.validate()
         return settings

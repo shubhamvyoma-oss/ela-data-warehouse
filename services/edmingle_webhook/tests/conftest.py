@@ -61,8 +61,4 @@ def settings(tmp_path: Path) -> Settings:
         replay_batch_size=10,
         replay_max_attempts=2,
         replay_backoff_seconds=1,
-        alert_console_enabled=True,
-        slack_webhook_url="",
-        discord_webhook_url="",
-        teams_webhook_url="",
     )

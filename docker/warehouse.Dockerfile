@@ -14,7 +14,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY api_scripts ./api_scripts
 COPY database ./database
 COPY manual_imports ./manual_imports
-COPY platform ./platform
 COPY processing ./processing
 COPY services/scheduler ./services/scheduler
 COPY shared ./shared

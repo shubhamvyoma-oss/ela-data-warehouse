@@ -50,6 +50,18 @@ Both services use the same mounted data and log volumes.
 | Rate limiter | `InMemoryRateLimiter` | Limits request rate per client key |
 | Service | `WebhookService` | Orchestrates database insert and queue fallback |
 
+## Rate Limiting
+
+The rate limiter's state is per-process, in-memory (a plain dict), not shared
+across processes. The Dockerfile runs gunicorn with 2 worker processes, so a
+single client's real effective limit is approximately double the configured
+RATE_LIMIT_REQUESTS value, not exactly that value -- gunicorn's request
+routing between workers determines which worker's counter a given request
+hits. This is a known, accepted limitation, not a bug to silently rely on:
+size RATE_LIMIT_REQUESTS with this in mind, and treat a fix (e.g. moving
+counters into the existing Postgres connection) as a future improvement, not
+a currently-guaranteed hard limit.
+
 ## Request Lifecycle
 
 ```text
@@ -187,11 +199,11 @@ Health checks are synchronous:
 
 Metrics reset on process restart because `MetricsRegistry` is in memory.
 
-## Alerting Architecture
+## Alerting
 
-`app.notifications.providers.AlertManager` can send alert payloads to console logs, Slack, Discord, and Microsoft Teams webhook URLs. The current application code defines this framework but does not yet wire automatic alert dispatch into database, queue, replay, or security failure paths.
+No alerting framework exists in this service. An earlier console/Slack/Discord/Teams alerting module (app.notifications.providers.AlertManager) was removed because it was never wired into any failure path -- confirmed dead code, not a feature. See the repository-root ROADMAP.md for the deferred notification-service boundary.
 
-Operational procedures should rely on logs, health checks, and metrics until alert dispatch is integrated.
+Operational procedures rely on logs, health checks, and metrics.
 
 ## Docker Architecture
 

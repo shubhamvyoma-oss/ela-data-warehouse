@@ -23,17 +23,16 @@ Silver transformations and Gold KPI models are added only after their source con
 | Path | Responsibility |
 | --- | --- |
 | `api_scripts/` | Dedicated Edmingle API jobs and their shared collection utilities |
-| `services/` | Independently deployed webhook, scheduler, and future operational services |
+| `services/` | Independently deployed webhook and scheduler |
 | `manual_imports/` | Validated CSV/XLSX ingestion into Bronze |
-| `processing/` | Bronze, Silver, Gold, validation, replay, and data-quality processing |
-| `warehouse/` | Schema-layer model ownership and contracts |
-| `platform/` | Shared platform capabilities such as configuration, alerting, and security |
-| `dashboards/` | Reserved backend and frontend boundaries for approved dashboards |
+| `processing/silver/` | Silver-layer transforms (typed/normalized reads of Bronze) |
+| `processing/gold/` | Reserved for Gold KPI models once definitions are approved |
 | `database/` | Warehouse migrations, bootstrap scripts, and verification SQL |
 | `shared/` | Runtime code used by multiple platform components |
 | `docker/` | Warehouse container assets |
 | `documentation/` | Architecture, deployment, operations, and data contracts |
 | `tests/` | Platform-level automated tests |
+| `ROADMAP.md` | Every deferred/reserved responsibility (Gold, dashboards, monitoring/notification services, data quality) in one place instead of scattered placeholder folders -- see ADR-002 |
 
 ## Local quick start
 

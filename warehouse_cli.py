@@ -7,6 +7,7 @@ from pathlib import Path
 from api_scripts.runner import collector_registry, run_collector
 from database.migrate import apply_migrations
 from manual_imports.import_file import import_file
+from processing.silver.runner import run_transform, transform_registry
 from shared.config import DatabaseSettings, WarehouseSettings
 from shared.database import Database
 from shared.logging import configure_logging
@@ -25,6 +26,10 @@ def build_parser() -> argparse.ArgumentParser:
     collect = commands.add_parser("collect", help="run one dedicated API collector")
     collect.add_argument("collector", choices=sorted(collector_registry()))
     collect.add_argument("--run-type", default="manual", choices=("manual", "scheduled", "replay"))
+
+    transform = commands.add_parser("transform", help="run one Silver-layer transform")
+    transform.add_argument("transform", choices=sorted(transform_registry()))
+    transform.add_argument("--run-type", default="manual", choices=("manual", "scheduled", "replay"))
 
     manual_import = commands.add_parser("import-file", help="load an approved file into Bronze")
     manual_import.add_argument("--source", required=True)
@@ -51,6 +56,9 @@ def main() -> int:
 
     if args.command == "collect":
         return run_collector(args.collector, args.run_type)
+
+    if args.command == "transform":
+        return run_transform(args.transform, args.run_type)
 
     if args.command == "import-file":
         database = Database(DatabaseSettings.from_environment(), "ela-manual-import")

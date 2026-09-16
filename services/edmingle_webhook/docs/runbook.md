@@ -202,7 +202,7 @@ Application log files rotate by size and compress rotated files. If logs grow un
 
 ## Alert Handling
 
-The current code includes `AlertManager`, but automatic alert calls are not wired into failure paths yet. Until that is implemented, operational alerting should be based on:
+No alerting framework exists in this service (a previously unused AlertManager module was removed as dead code -- see ROADMAP.md). Operational alerting should be based on:
 
 - Reverse proxy or uptime checks on `/ready`.
 - Metrics scraping.

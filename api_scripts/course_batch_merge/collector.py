@@ -11,36 +11,26 @@ from api_scripts.common.runtime import CollectorRuntime
 
 # ═══════════════════════════════════════════════════════════════════
 # This collector is a line-for-line port of the legacy standalone script
-# `build_course_catalog.py` (the PRIMARY catalogue builder -- there is a
-# non-primary backup, `build_course_catalog_alt.py`, which this does NOT
-# port) onto Postgres via CollectorRuntime.commit_rows(). Only the output
-# sink changed -- CSV became bronze.course_catalog -- every extract/filter/
-# derive rule below is preserved exactly, including the quirks noted
-# inline. Do not "fix" or simplify the business logic here without
-# checking the original script first.
+# `Course_Batch_Merge.py` (CSV output) onto Postgres via
+# CollectorRuntime.commit_rows(). Only the output sink changed -- every
+# extract/filter/derive rule below is preserved exactly, including the
+# quirks noted inline. Do not "fix" or simplify the business logic here
+# without checking the original script first.
 # ═══════════════════════════════════════════════════════════════════
 
-# Unlike the sibling `course_batch_merge` job (which fetches all three
-# masterbatch statuses, including Archived, because its own source script
-# needs the full batch history), THIS job's source script only ever fetches
-# Active and Completed. Archived is intentionally never fetched here -- do
-# not add status=1.
-_BATCH_STATUSES: dict[int, str] = {0: "Active", 3: "Completed"}
+# Unlike api_scripts/batches (MasterBatchCollector), which is a raw paginated
+# mirror of the API, this job fetches ALL THREE statuses -- including
+# Archived -- because the source script's Master Build process needs the
+# full course/batch universe to compute Is_Latest_Batch and Final_Status
+# correctly. Do not drop Archived.
+_BATCH_STATUSES: dict[int, str] = {0: "Active", 1: "Archived", 3: "Completed"}
 
-# The original script hardcodes per_page=1000. Preserved as-is.
+# The original script hardcodes per_page=1000 (not the configurable
+# EDMINGLE_BATCHES_PER_PAGE / settings.batches_per_page used by the sibling
+# `batches` collector). Preserved as-is.
 _BATCHES_PER_PAGE = 1000
 
-# Specific batch_id values to exclude outright. Nothing here is matched by
-# name -- only by this exact ID list, applied before any other transform
-# (bundle-enrollment rollup, latest-batch marking, etc. all see the batch
-# universe with these IDs already removed). Ported verbatim from
-# build_course_catalog.py's BATCH_IDS_TO_EXCLUDE.
-_BATCH_IDS_TO_EXCLUDE: set[int] = {
-    12458, 12459, 12464, 12472, 12473, 12474, 12475, 12485, 12487,
-    12513, 12522, 12550, 12551, 12554, 12606, 12607,
-    70572, 42632, 70587, 53438,
-}
-
+_TEST_COURSE_KEYWORDS = ["test", "demo", "dummy", "sample", "cbt_test", "payment_test", "smoke"]
 _VALID_CATALOGUE_STATUSES = {"Completed", "Ongoing", "Upcoming"}
 
 # batch-specific fields nulled out on synthetic "catalogue-only" rows
@@ -56,29 +46,28 @@ _BATCH_ONLY_COLUMNS = [
 ]
 
 
-class CourseCatalogueCollector:
-    """Ported from build_course_catalog.py (the primary Stage-1 catalogue
-    builder). Full-refresh: fetches the whole catalogue + Active/Completed
-    batches every run and writes the merged result straight into
-    bronze.course_catalog (a dedicated, already-transformed Bronze table --
-    see TransformedTableRepository), matching the original script's
+class CourseBatchMergeCollector:
+    """Ported from Course_Batch_Merge.py. Full-refresh: fetches the whole
+    catalogue + all batches every run and writes the merged result straight
+    into bronze.course_batch_merge (a dedicated, already-transformed Bronze
+    table -- see TransformedTableRepository), matching the original script's
     behavior of regenerating the entire CSV from scratch each run."""
 
-    name = "catalogue"
+    name = "course_batch_merge"
     checkpoint_partition_key = "default"
 
     def run(self, runtime: CollectorRuntime, checkpoint: dict[str, Any]) -> None:
         institute_id = runtime.client.settings.institute_id
         if not institute_id:
-            raise ValueError("EDMINGLE_INSTITUTE_ID is required for catalogue")
+            raise ValueError("EDMINGLE_INSTITUTE_ID is required for course_batch_merge")
         organization_id = runtime.client.settings.organization_id
 
         # ── Step 1: Fetch data ──────────────────────────────────────
         cat_df = _fetch_catalogue(runtime, institute_id)
         batch_df = _fetch_batches(runtime, organization_id)
 
-        # ── Step 2: Exclude specific known-bad batch IDs ────────────
-        batch_df = _filter_excluded_batches(batch_df)
+        # ── Step 2: Filter test batches ─────────────────────────────
+        batch_df = _filter_test_batches(batch_df)
 
         # ── Step 3: Compute bundle_enrollment_count before merge ────
         batch_df = _compute_bundle_enrollment(batch_df)
@@ -93,19 +82,22 @@ class CourseCatalogueCollector:
         merged = batch_df.merge(cat_df, left_on="bundle_id", right_on="Bundle id", how="left")
         merged["Catalogue_Match"] = merged["Bundle id"].notna().astype(int)
 
-        # ── Step 7: Apply business logic (Final_Status) ─────────────
+        # ── Step 7: Filter test/junk courses (no catalogue match + test name) ─
+        merged = _filter_test_courses(merged)
+
+        # ── Step 8: Apply business logic (Final_Status) ─────────────
         merged = _apply_business_logic(merged)
 
-        # ── Step 8: Add catalogue-only courses (no batches) ─────────
+        # ── Step 9: Add catalogue-only courses (no batches) ─────────
         final_df = _add_courses_without_batches(merged, cat_df)
 
-        # ── Step 9: Format dates (Unix timestamp -> date) ───────────
+        # ── Step 10: Format dates (Unix timestamp -> date) ──────────
         final_df = _format_dates(final_df)
 
-        # ── Step 10: Build rows + write to Postgres ──────────────────
+        # ── Step 11: Build rows + write to Postgres ─────────────────
         rows = _build_rows(final_df)
         runtime.commit_rows(
-            table="bronze.course_catalog",
+            table="bronze.course_batch_merge",
             columns=[target for target, _source, _caster in _FIELD_MAP],
             rows=rows,
             unique_columns=["batch_id", "bundle_id"],
@@ -119,16 +111,16 @@ def _fetch_catalogue(runtime: CollectorRuntime, institute_id: str) -> pd.DataFra
     payload = runtime.client.get_json(
         f"/institute/{institute_id}/courses/catalogue",
         params={"institution_id": institute_id},
-        context="course catalogue",
+        context="course batch merge catalogue",
     )
-    rows = require_record_list(payload, "response", "course catalogue response")
+    rows = require_record_list(payload, "response", "course batch merge catalogue response")
     if not rows:
         # Mirrors the original script's "Catalogue fetch failed. Aborting."
-        raise ApiContractError("course catalogue fetch returned no rows; aborting full refresh")
+        raise ApiContractError("course batch merge catalogue returned no rows; aborting full refresh")
     return pd.DataFrame(rows)
 
 
-# ── Fetch: batches (Active + Completed only, paginated) ─────────────
+# ── Fetch: batches (all three statuses, paginated) ──────────────────
 def _fetch_batches(runtime: CollectorRuntime, organization_id: str) -> pd.DataFrame:
     all_rows: list[dict[str, Any]] = []
 
@@ -143,9 +135,9 @@ def _fetch_batches(runtime: CollectorRuntime, organization_id: str) -> pd.DataFr
                     "per_page": _BATCHES_PER_PAGE,
                     "organization_id": organization_id,
                 },
-                context=f"course catalogue batches status={status_code} page={page}",
+                context=f"course batch merge batches status={status_code} page={page}",
             )
-            courses = require_record_list(payload, "courses", "course catalogue batches response")
+            courses = require_record_list(payload, "courses", "course batch merge batches response")
 
             if not courses:
                 break
@@ -179,24 +171,14 @@ def _fetch_batches(runtime: CollectorRuntime, organization_id: str) -> pd.DataFr
 
     if not all_rows:
         # Mirrors the original script's "Batch fetch returned no data. Aborting."
-        raise ApiContractError("course catalogue batches fetch returned no rows; aborting full refresh")
+        raise ApiContractError("course batch merge batches fetch returned no rows; aborting full refresh")
     return pd.DataFrame(all_rows)
 
 
 # ── Transform steps (ported 1:1 from the legacy script) ─────────────
-def _is_excluded_batch_id(batch_id: Any) -> bool:
-    try:
-        return int(batch_id) in _BATCH_IDS_TO_EXCLUDE
-    except (TypeError, ValueError):
-        return False
-
-
-def _filter_excluded_batches(df: pd.DataFrame) -> pd.DataFrame:
-    """Drops rows whose batch_id is in _BATCH_IDS_TO_EXCLUDE. Applied before
-    any other transform, exactly like build_course_catalog.py's
-    filter_excluded_batches()."""
-    keep_mask = ~df["batch_id"].apply(_is_excluded_batch_id)
-    return df.loc[keep_mask].reset_index(drop=True)
+def _filter_test_batches(df: pd.DataFrame) -> pd.DataFrame:
+    mask = df["batch_name"].astype(str).str.lower().str.contains("test batch", na=False)
+    return df.loc[~mask].reset_index(drop=True)
 
 
 def _compute_bundle_enrollment(df: pd.DataFrame) -> pd.DataFrame:
@@ -217,6 +199,16 @@ def _mark_latest_batch(df: pd.DataFrame) -> pd.DataFrame:
     working.loc[is_new_bundle, "Is_Latest_Batch"] = 1
 
     return working.drop(columns=["_sort_date"])
+
+
+def _filter_test_courses(df: pd.DataFrame) -> pd.DataFrame:
+    # Only remove rows where BOTH conditions are true:
+    #   1. Catalogue_Match = 0 (not in catalogue)
+    #   2. bundle_name contains a test/junk keyword
+    bundle_name_lower = df["bundle_name"].astype(str).str.lower()
+    contains_keyword = bundle_name_lower.apply(lambda value: any(k in value for k in _TEST_COURSE_KEYWORDS))
+    drop_mask = (df["Catalogue_Match"] == 0) & contains_keyword
+    return df.loc[~drop_mask].reset_index(drop=True)
 
 
 def _apply_business_logic(df: pd.DataFrame) -> pd.DataFrame:

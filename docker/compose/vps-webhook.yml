@@ -1,0 +1,30 @@
+services:
+  webhook:
+    container_name: ela-data-warehouse-webhook
+    image: ela-data-warehouse-webhook:latest
+    ports: !override
+      - "127.0.0.1:5101:5100"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  replay:
+    image: ela-data-warehouse-webhook:latest
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+volumes:
+  edmingle_webhook_data:
+    name: ela_dw_webhook_data
+  edmingle_webhook_logs:
+    name: ela_dw_webhook_logs
+
+networks:
+  edmingle_network:
+    name: ela_dw_webhook_network
+

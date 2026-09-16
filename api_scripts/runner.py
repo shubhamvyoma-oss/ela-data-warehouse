@@ -10,6 +10,7 @@ from api_scripts.common.repositories import (
     CheckpointRepository,
     CredentialMetadataRepository,
     RunRepository,
+    TransformedTableRepository,
 )
 from api_scripts.common.runtime import CollectorRuntime
 from shared.config import DatabaseSettings, EdmingleSettings, WarehouseSettings
@@ -21,15 +22,25 @@ LOGGER = logging.getLogger("warehouse.runner")
 
 def collector_registry():
     from api_scripts.attendance.collector import AttendanceCollector
-    from api_scripts.batches.collector import MasterBatchCollector
     from api_scripts.catalogue.collector import CourseCatalogueCollector
-    from api_scripts.enrollment.collector import EnrollmentCollector
+    from api_scripts.class_id_lookup.collector import ClassIdLookupCollector
+    from api_scripts.class_session_attendance.collector import ClassSessionAttendanceCollector
+    from api_scripts.course_batch_merge.collector import CourseBatchMergeCollector
+    from api_scripts.course_catalogue_raw.collector import CourseCatalogueRawCollector
+    from api_scripts.course_enrollments.collector import CourseEnrollmentsCollector
+    from api_scripts.enrollment_reports.collector import EnrollmentReportsCollector
+    from api_scripts.students.collector import StudentsCollector
 
     return {
         "attendance": AttendanceCollector,
-        "enrollment": EnrollmentCollector,
-        "batches": MasterBatchCollector,
         "catalogue": CourseCatalogueCollector,
+        "class_id_lookup": ClassIdLookupCollector,
+        "class_session_attendance": ClassSessionAttendanceCollector,
+        "course_batch_merge": CourseBatchMergeCollector,
+        "course_catalogue_raw": CourseCatalogueRawCollector,
+        "course_enrollments": CourseEnrollmentsCollector,
+        "enrollment_reports": EnrollmentReportsCollector,
+        "students": StudentsCollector,
     }
 
 
@@ -63,6 +74,7 @@ def run_collector(name: str, run_type: str = "manual") -> int:
             run_id=run_id,
             client=client,
             bronze=BronzeRepository(database),
+            transformed=TransformedTableRepository(database),
         )
         try:
             collector.run(runtime, checkpoint_before)

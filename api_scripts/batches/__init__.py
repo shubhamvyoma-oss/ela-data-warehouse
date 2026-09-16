@@ -1,1 +1,0 @@
-"""Edmingle master-batch collector."""

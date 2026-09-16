@@ -8,9 +8,14 @@ from api_scripts.runner import collector_registry
 def test_repository_uses_frozen_component_layout() -> None:
     required = {
         "api_scripts/attendance",
-        "api_scripts/enrollment",
-        "api_scripts/batches",
         "api_scripts/catalogue",
+        "api_scripts/class_id_lookup",
+        "api_scripts/class_session_attendance",
+        "api_scripts/course_batch_merge",
+        "api_scripts/course_catalogue_raw",
+        "api_scripts/course_enrollments",
+        "api_scripts/enrollment_reports",
+        "api_scripts/students",
         "services/edmingle_webhook",
         "services/scheduler",
         "processing/bronze",
@@ -30,7 +35,17 @@ def test_repository_uses_frozen_component_layout() -> None:
 
 
 def test_collector_registry_uses_confirmed_names() -> None:
-    assert set(collector_registry()) == {"attendance", "enrollment", "batches", "catalogue"}
+    assert set(collector_registry()) == {
+        "attendance",
+        "catalogue",
+        "class_id_lookup",
+        "class_session_attendance",
+        "course_batch_merge",
+        "course_catalogue_raw",
+        "course_enrollments",
+        "enrollment_reports",
+        "students",
+    }
 
 
 def test_naming_convention_is_an_explicit_project_standard() -> None:

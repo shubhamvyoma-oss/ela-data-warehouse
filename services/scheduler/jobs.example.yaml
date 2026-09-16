@@ -4,15 +4,35 @@ jobs:
     collector: attendance
     is_enabled: false
     interval_minutes: 1440
-  - name: enrollment_weekly
-    collector: enrollment
-    is_enabled: false
-    interval_minutes: 10080
   - name: catalogue_weekly
     collector: catalogue
     is_enabled: false
     interval_minutes: 10080
-  - name: batches_weekly
-    collector: batches
+  - name: course_batch_merge_weekly
+    collector: course_batch_merge
+    is_enabled: false
+    interval_minutes: 10080
+  - name: course_catalogue_raw_weekly
+    collector: course_catalogue_raw
+    is_enabled: false
+    interval_minutes: 10080
+  - name: class_id_lookup_weekly
+    collector: class_id_lookup
+    is_enabled: false
+    interval_minutes: 10080
+  - name: class_session_attendance_daily
+    collector: class_session_attendance
+    is_enabled: false
+    interval_minutes: 1440
+  - name: students_weekly
+    collector: students
+    is_enabled: false
+    interval_minutes: 10080
+  - name: course_enrollments_weekly
+    collector: course_enrollments
+    is_enabled: false
+    interval_minutes: 10080
+  - name: enrollment_reports_weekly
+    collector: enrollment_reports
     is_enabled: false
     interval_minutes: 10080

@@ -212,5 +212,86 @@ class BronzeRepository:
         return inserted
 
 
+class TransformedTableRepository:
+    """Writes already-transformed rows from ported legacy pipelines into their
+    own dedicated Bronze tables (e.g. bronze.course_catalog, bronze.students) --
+    distinct from BronzeRepository, which only knows bronze.edmingle_api_records'
+    raw-payload shape. Table and column names are always static strings chosen
+    by the calling collector, never derived from API response data, so building
+    SQL from them here is safe.
+
+    This is a deliberate, explicit exception to "Bronze holds only raw
+    payloads" for the ported-legacy-pipeline tables -- see
+    documentation/decisions and the migration 006 comment for context.
+    """
+
+    def __init__(self, database: Database) -> None:
+        self.database = database
+
+    def write_with_checkpoint(
+        self,
+        *,
+        table: str,
+        columns: list[str],
+        rows: list[tuple[Any, ...]],
+        unique_columns: list[str],
+        collector_name: str,
+        run_id: uuid.UUID,
+        checkpoint: dict[str, Any],
+        partition_key: str = "default",
+    ) -> int:
+        inserted = 0
+        with self.database.transaction() as connection, connection.cursor() as cursor:
+            if rows:
+                received_at = datetime.now(UTC)
+                all_columns = ["pipeline_run_id", "received_at", *columns]
+                values = [(run_id, received_at, *row) for row in rows]
+                update_columns = [c for c in columns if c not in unique_columns]
+                if update_columns:
+                    set_clause = ", ".join(f"{c} = EXCLUDED.{c}" for c in update_columns)
+                    on_conflict_sql = f"ON CONFLICT ({', '.join(unique_columns)}) DO UPDATE SET {set_clause}"
+                else:
+                    on_conflict_sql = f"ON CONFLICT ({', '.join(unique_columns)}) DO NOTHING"
+                returned = execute_values(
+                    cursor,
+                    f"""
+                    INSERT INTO {table} ({', '.join(all_columns)})
+                    VALUES %s
+                    {on_conflict_sql}
+                    RETURNING id
+                    """,
+                    values,
+                    page_size=500,
+                    fetch=True,
+                )
+                inserted = len(returned)
+            cursor.execute(
+                """
+                INSERT INTO system.collection_checkpoints (
+                    collector_name, partition_key, checkpoint, updated_at, last_committed_run_id
+                ) VALUES (%s, %s, %s, now(), %s)
+                ON CONFLICT (collector_name, partition_key) DO UPDATE
+                SET checkpoint = EXCLUDED.checkpoint,
+                    updated_at = now(),
+                    last_committed_run_id = EXCLUDED.last_committed_run_id
+                """,
+                (collector_name, partition_key, Json(checkpoint), run_id),
+            )
+            cursor.execute(
+                """
+                INSERT INTO audit.events (
+                    run_id, component, event_type, status, row_count, details
+                ) VALUES (%s, %s, 'checkpoint_committed', 'SUCCESS', %s, %s)
+                """,
+                (
+                    run_id,
+                    collector_name,
+                    inserted,
+                    Json({"partition_key": partition_key, "received_rows": len(rows), "table": table}),
+                ),
+            )
+        return inserted
+
+
 def utc_iso() -> str:
     return datetime.now(UTC).isoformat()

@@ -137,6 +137,23 @@ payloads or database credentials directly to a frontend.
   routing are outside this repository's scope — this folder was reserved
   for a dashboard/service ingress that doesn't exist yet.
 
+## Shared code (previously `shared/{utils,models}`)
+
+Two more placeholder-only folders, missed by the original ADR-002 consolidation pass, found and
+removed 2026-09-23: both held nothing but a one-paragraph "reserved" README, exactly like the
+~20 folders ADR-002 already dealt with.
+
+- **`shared/utils/`**: "reserved for genuinely cross-component utilities." Confirmed against the
+  current code -- nothing imports `shared.utils` anywhere. Every normalization/formatting helper
+  that exists today already lives with its actual owner (`api_scripts/common/`,
+  `processing/silver/_normalize.py`) per this repo's own stated policy ("job-specific helpers
+  stay with their owner"). Build a real `shared/utils/` only when a second component genuinely
+  needs to import the same helper a third one already has -- not before.
+- **`shared/models/`**: "reserved for models used by more than one platform component." Confirmed
+  against the current code -- nothing imports `shared.models` anywhere; every model in this
+  codebase (`api_scripts/common/models.py`, `shared/config/settings.py`) already lives with its
+  one actual consumer. Same rule: build it only when a second component genuinely needs one.
+
 ## Reserved API jobs (unchanged, still tracked in `api_scripts/`, not here)
 
 `api_scripts/sessions/`, `api_scripts/teachers/`, `api_scripts/transactions/`

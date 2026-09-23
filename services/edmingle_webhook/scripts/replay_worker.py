@@ -12,10 +12,20 @@ from app.replay.engine import ReplayEngine
 
 running = True
 
+HEARTBEAT_FILENAME = ".replay_heartbeat"
+
 
 def stop_worker(signum: int, frame: object) -> None:
     global running
     running = False
+
+
+def _touch_heartbeat(settings: Settings) -> None:
+    # scripts/replay_healthcheck.py checks this file's mtime -- the process
+    # itself has no HTTP server to health-check (unlike the webhook service,
+    # which shares this same Docker image's HEALTHCHECK), so a live,
+    # regularly-updated file is this worker's own health signal instead.
+    (settings.data_directory / HEARTBEAT_FILENAME).touch()
 
 
 def main() -> None:
@@ -28,6 +38,7 @@ def main() -> None:
     engine = ReplayEngine(settings, database, queue, MetricsRegistry())
     while running:
         engine.run_once()
+        _touch_heartbeat(settings)
         time.sleep(settings.replay_backoff_seconds)
     database.close()
 

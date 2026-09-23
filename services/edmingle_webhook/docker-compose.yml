@@ -21,6 +21,12 @@ services:
     env_file:
       - .env
     command: ["python", "scripts/replay_worker.py"]
+    healthcheck:
+      test: ["CMD", "python", "scripts/replay_healthcheck.py"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
     volumes:
       - edmingle_webhook_data:/app/data
       - edmingle_webhook_logs:/app/logs

@@ -1,6 +1,22 @@
 # Deployment
 
-This guide describes the planned production deployment process for the Docker-based webhook implementation.
+This guide describes the production deployment process for the Docker-based webhook
+implementation. **Updated 2026-09-23** to match the actual VPS deployment (this was
+originally written as a plan before the real cutover happened): the live deployment uses
+`docker/compose/vps-webhook.yml` as an override on top of this folder's own
+`docker-compose.yml` -- it renames the container/image/volumes/network so this stack
+doesn't collide with the older standalone `edmingle-webhook` deployment, remaps the
+published port to `127.0.0.1:5101` (a host-level reverse proxy -- Caddy on this VPS --
+handles the public `:443` -> `:5101` hop; the service itself is never exposed on `0.0.0.0`
+directly), and adds log rotation. Every `docker compose` command below needs both `-f`
+flags when run against the real VPS deployment:
+
+```bash
+docker compose -f docker-compose.yml -f ../../docker/compose/vps-webhook.yml <command>
+```
+
+(paths above are relative to this `services/edmingle_webhook/` directory; adjust if running
+from the repo root).
 
 ## Deployment Model
 
@@ -90,7 +106,11 @@ docker compose stop webhook replay
 docker run --rm -v edmingle_webhook_data:/data -v "$PWD:/backup" busybox tar czf /backup/webhook_data_backup.tgz /data
 ```
 
-The production data volume name is `edmingle_webhook_data`.
+In this repo's own `docker-compose.yml`, the data volume is named
+`edmingle_webhook_data`. On the actual VPS deployment, `docker/compose/vps-webhook.yml`
+renames it to `ela_dw_webhook_data` (and the logs volume to `ela_dw_webhook_logs`) -- use
+the real name for any `docker run -v <name>:/data ...` backup/inspection command against
+the live deployment.
 
 ## Migration Procedure
 
@@ -112,21 +132,38 @@ The migration does not alter, truncate, or replace `public.webhook_events`.
 ## Build and Start
 
 ```bash
-docker compose build
-docker compose up -d webhook replay
+docker compose -f docker-compose.yml -f ../../docker/compose/vps-webhook.yml build webhook replay
+docker compose -f docker-compose.yml -f ../../docker/compose/vps-webhook.yml up -d webhook replay
 ```
 
 The Docker image installs dependencies directly from `requirements.txt`. It does not create or use a virtual environment inside the container.
+
+**Before this fix (2026-09-23), the `replay` service had never actually run on the VPS --
+only `webhook` was deployed.** Deploying it for the first time immediately hit a real bug:
+`python scripts/replay_worker.py` crash-looped with `ModuleNotFoundError: No module named
+'app'`, because a bare `python script.py` invocation only puts the script's own directory
+(`scripts/`) on `sys.path`, not the working directory -- unlike `gunicorn ... wsgi:app`
+(used by `webhook`), which adds the working directory itself. Fixed by adding
+`ENV PYTHONPATH=/app` to the Dockerfile. If you ever see this exact traceback again after
+changing the Dockerfile or base image, check that env var is still set.
+
+The `replay` service also has its own healthcheck (`scripts/replay_healthcheck.py`,
+checking a heartbeat file `replay_worker.py` touches after every loop iteration) instead of
+inheriting the image's default HTTP-based one -- `replay` doesn't serve HTTP, so the
+inherited check would always fail (connection refused on port 5100) and report the
+container unhealthy forever even while it's working correctly.
 
 ## Health Verification
 
 Check container status:
 
 ```bash
-docker compose ps
+docker compose -f docker-compose.yml -f ../../docker/compose/vps-webhook.yml ps
 ```
 
-Check endpoints:
+Check endpoints (`5100` here is the container's own internal port; on the VPS itself this
+is reachable at `127.0.0.1:5101` per the port remap above, or publicly via
+`https://ela-webhooks.vyoma.org` through Caddy):
 
 ```bash
 curl -fsS http://127.0.0.1:5100/live

@@ -5,7 +5,7 @@ api_scripts/ collectors."""
 from __future__ import annotations
 
 import re
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 
 _NON_DIGIT_PLUS = re.compile(r"[^0-9+]")
 
@@ -63,3 +63,28 @@ def parse_date(value: object, formats: tuple[str, ...] = DEFAULT_DATE_FORMATS) -
         except ValueError:
             continue
     return None
+
+
+def parse_epoch_seconds(value: object) -> datetime | None:
+    # 0 is Edmingle'''s own unset sentinel for date-like fields in webhook
+    # payloads (e.g. enrollment_expiration_date is always 0 when not set) --
+    # not a real 1970-01-01 timestamp, so it maps to None like any other
+    # missing value.
+    if value in (None, ):
+        return None
+    try:
+        seconds = float(value)
+    except (TypeError, ValueError):
+        return None
+    if seconds <= 0:
+        return None
+    return datetime.fromtimestamp(seconds, tz=UTC)
+
+
+def parse_numeric(value: object) -> float | None:
+    if value in (None, ):
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None

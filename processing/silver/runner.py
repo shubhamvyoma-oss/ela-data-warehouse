@@ -17,6 +17,7 @@ def transform_registry():
     from processing.silver.course_enrollments import transform_course_enrollments
     from processing.silver.courses import transform_courses
     from processing.silver.enrollment_reports import transform_enrollment_reports
+    from processing.silver.enrollments import transform_enrollments
     from processing.silver.report55_batch_attendance_summary import (
         transform_report55_batch_attendance_summary,
     )
@@ -31,6 +32,7 @@ def transform_registry():
         "course_enrollments": transform_course_enrollments,
         "courses": transform_courses,
         "enrollment_reports": transform_enrollment_reports,
+        "enrollments": transform_enrollments,
         "report55_batch_attendance_summary": transform_report55_batch_attendance_summary,
         "report55_session_attendance": transform_report55_session_attendance,
         "students": transform_students,

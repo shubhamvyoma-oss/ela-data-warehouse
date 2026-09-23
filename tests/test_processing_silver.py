@@ -15,6 +15,7 @@ def test_transform_registry_has_expected_entries() -> None:
         "report55_batch_attendance_summary",
         "report55_session_attendance",
         "class_session_attendance",
+        "enrollments",
     }
 
 

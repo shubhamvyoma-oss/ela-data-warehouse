@@ -11,9 +11,13 @@ This component replaces the legacy Flask webhook receiver in a staged migration.
 - `POST /edmingle/webhook` receives events
 - `POST /webhook` is an optional compatibility alias
 - `/edmingle/webhook` accepts both forms with and without a trailing slash
-- Successful writes use `public.webhook_events(source, received_at, raw_payload)`
+- Successful writes use `bronze.webhook_events(pipeline_run_id, source, received_at, raw_payload)`
+  (updated 2026-09-23 -- see docs/database.md for the full history; was `public.webhook_events`
+  before the live write path was redirected into the parent warehouse project's own Bronze layer)
 
-The HTTP request path stores the full JSON payload and does not route directly to Silver. Warehouse synchronization and Silver routing are downstream boundaries.
+The HTTP request path stores the full JSON payload directly into Bronze (see docs/database.md);
+Silver routing/reconciliation for this data is still a downstream boundary, same as every other
+Bronze table in the parent warehouse project.
 
 ## Runtime
 
@@ -58,10 +62,10 @@ Replay workers atomically claim pending queue files by moving them into `.proces
 The live raw event table remains authoritative:
 
 ```sql
-public.webhook_events(source, received_at, raw_payload)
+bronze.webhook_events(pipeline_run_id, source, received_at, raw_payload)
 ```
 
-The optional migration `migrations/001_operational_tables.sql` creates deduplication metadata only. It does not alter or rewrite `public.webhook_events`.
+The optional migration `migrations/001_operational_tables.sql` creates deduplication metadata only. It does not alter or rewrite `bronze.webhook_events`.
 
 ## Tests
 

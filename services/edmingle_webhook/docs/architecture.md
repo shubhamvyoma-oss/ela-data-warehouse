@@ -17,7 +17,7 @@ endpoint accepts both forms with and without a trailing slash. This prevents
 third-party validation probes from receiving Flask's default empty or HTML
 responses.
 
-The existing `public.webhook_events` table remains the authoritative event store. The `/webhook` POST route is a compatibility alias that uses the same internal handler as `/edmingle/webhook`. A persistent JSONL queue protects accepted events during database outages.
+`bronze.webhook_events` (updated 2026-09-23 -- was `public.webhook_events` before the live write path was redirected into the parent warehouse project's own Bronze layer; see docs/database.md) is the authoritative event store. The `/webhook` POST route is a compatibility alias that uses the same internal handler as `/edmingle/webhook`. A persistent JSONL queue protects accepted events during database outages.
 
 ## Runtime Components
 
@@ -112,10 +112,12 @@ Validation happens after authentication. For live compatibility, empty bodies, m
 
 `DatabasePool.insert_event` retries insertion according to `DB_RETRY_ATTEMPTS` and `DB_RETRY_BACKOFF_MS`.
 
-The compatibility-phase insert writes only the live table contract:
+Each insert also writes a same-transaction `audit.pipeline_runs` row (`run_type='streaming'`,
+already SUCCESS/finished -- a single webhook insert has no meaningful in-progress state), since
+every Bronze table's `pipeline_run_id` column requires one:
 
 ```sql
-INSERT INTO public.webhook_events (source, received_at, raw_payload)
+INSERT INTO bronze.webhook_events (pipeline_run_id, source, received_at, raw_payload)
 VALUES (...)
 ```
 
@@ -123,7 +125,7 @@ When `WEBHOOK_DEDUP_ENABLED=true`, each insert runs in one transaction:
 
 1. Insert `dedup_key` into `public.webhook_event_dedup`.
 2. If the key already exists, roll back and return duplicate.
-3. Insert payload into `public.webhook_events`.
+3. Insert payload into `bronze.webhook_events`.
 4. Update `public.webhook_event_dedup.webhook_event_id`.
 5. Commit.
 

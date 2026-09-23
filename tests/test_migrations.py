@@ -20,4 +20,11 @@ def test_migrations_create_required_schemas_and_contracts() -> None:
     assert "monitoring.service_health" in migrations
     assert "bronze.edmingle_api_records" in migrations
     assert "bronze.manual_import_rows" in migrations
-    assert "public.webhook_events" not in migrations
+    # Naive substring match would false-positive on migration 011's own
+    # comment explaining *why* it deliberately does not create this table
+    # (public.webhook_events is the webhook service's own storage --
+    # bronze.webhook_events, a separate table, is what these migrations
+    # create instead). Check for the actual CREATE statement, which is the
+    # real thing this guard cares about.
+    assert "CREATE TABLE public.webhook_events" not in migrations
+    assert "CREATE TABLE IF NOT EXISTS public.webhook_events" not in migrations

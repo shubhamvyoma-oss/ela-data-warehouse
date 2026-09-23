@@ -1,15 +1,29 @@
 # API Jobs
 
-Each API source has a dedicated folder under `api_scripts/` and exposes a collector through the central runner.
+Each API source has a dedicated folder under `api_scripts/` and exposes a collector through the central runner. Registered collector names below are exactly what `python warehouse_cli.py collect <name>` expects, matching `api_scripts/runner.py::collector_registry()`.
 
-| Job | Source behavior confirmed from supplied scripts | Bronze resource |
-| --- | --- | --- |
-| `attendance` | Date-windowed report `55`, one request per day | `attendance_records` |
-| `enrollment` | Master-batch index followed by paged class students | `student_enrollments` |
-| `catalogue` | Institute course catalogue from the confirmed `response` list | `courses` |
-| `batches` | Paged active, archived, and completed master batches | `batches` |
+| Registered collector | Folder | Source behavior | Bronze table |
+| --- | --- | --- | --- |
+| `attendance` | `attendance/` | Date-windowed report `55`, one request per day | `report55_batch_attendance_summary`, `report55_session_attendance` |
+| `attendance_data.catalogue` | `attendance_data/catalogue/` | Institute course catalogue, merge/exclusion/latest-batch logic | `course_catalog` |
+| `attendance_data.class_id_lookup` | `attendance_data/class_id_lookup/` | Resolves `class_id`(s) per batch (reads `course_catalog`) | `class_id_lookup` |
+| `attendance_data.class_session_attendance` | `attendance_data/class_session_attendance/` | Per-session attendance per `class_id` (reads `class_id_lookup`) | `class_session_attendance` |
+| `corses_batches.course_batch_merge` | `corses_batches/course_batch_merge/` | Paged active, archived, and completed master batches | `course_batch_merge` |
+| `corses_batches.course_catalogue_raw` | `corses_batches/course_catalogue_raw/` | Flattened catalogue endpoint, dynamic columns | `course_catalogue_raw` |
+| `ela_mis_datasets.students` | `ela_mis_datasets/students/` | Paged class students, one row per student | `students` |
+| `ela_mis_datasets.course_enrollments` | `ela_mis_datasets/course_enrollments/` | Per-(student, class) attendance summary (reads `students` for eligible user_ids) | `course_enrollments` |
+| `enrollment_reports` | `enrollments_reports/` | Date-chunked row-level enrollment report | `enrollment_reports` |
 
-Folders for teachers, students, sessions, and transactions are reserved only as documented contracts. Their API scripts are not fabricated before endpoint samples are supplied.
+Not a scheduled collector: `edmingle_api_key_generator/generate.py` is a manual-only script
+(username/password login, not API-key-authenticated) that generates a new Edmingle tutor API
+key, emails it to the configured recipients, and records only lifecycle metadata
+(`expires_at`/`status`) -- never the key value itself -- via the same `system.api_credentials`
+table every collector's `ApiKeyLifecycle` check reads. See `api_scripts/api_key_manager/README.md`
+and `edmingle_api_key_generator/generate.py`'s own docstring for the "never log/store the key"
+constraint.
+
+Folders for teachers, sessions, and transactions are reserved only as documented contracts.
+Their API scripts are not fabricated before endpoint samples are supplied.
 
 ## Contract for every collector
 

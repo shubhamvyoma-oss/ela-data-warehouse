@@ -305,7 +305,10 @@ def _treat_zero_rating_as_missing() -> bool:
 # ============================================================
 
 def _resolve_session_id_column(df: pd.DataFrame) -> str:
-    col = os.getenv("ATTENDANCE_SESSION_ID_COLUMN", DEFAULT_SESSION_ID_COLUMN).strip() or DEFAULT_SESSION_ID_COLUMN
+    col = (
+        os.getenv("ATTENDANCE_SESSION_ID_COLUMN", DEFAULT_SESSION_ID_COLUMN).strip()
+        or DEFAULT_SESSION_ID_COLUMN
+    )
     if col in df.columns:
         return col
     LOGGER.warning(
@@ -462,7 +465,8 @@ def _compute_batch_summary(df: pd.DataFrame, cs: pd.DataFrame, session_col: str)
     total_classes_conducted = (
         conducted.groupby("batch_Id")[session_col].nunique().reindex(summary.index, fill_value=0)
     )
-    _ = (total_classes_planned - total_classes_conducted).clip(lower=0)  # total_classes_remaining (not persisted)
+    # total_classes_remaining (not persisted)
+    _ = (total_classes_planned - total_classes_conducted).clip(lower=0)
 
     summary["total_present_marks"] = (
         conducted.groupby("batch_Id")["present_count"].sum().reindex(summary.index, fill_value=0)

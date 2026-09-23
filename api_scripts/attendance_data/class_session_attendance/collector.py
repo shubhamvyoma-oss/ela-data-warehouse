@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from api_scripts.common.repositories import utc_iso
@@ -68,7 +68,7 @@ def to_unix(date_str: str) -> int:
     kept exactly as written to avoid drifting from the source pipeline's
     IST-boundary handling."""
     dt = datetime.strptime(date_str, "%Y-%m-%d")
-    utc_dt = dt.replace(tzinfo=timezone.utc)
+    utc_dt = dt.replace(tzinfo=UTC)
     return int(utc_dt.timestamp() - IST_OFFSET_SECONDS)
 
 
@@ -78,7 +78,7 @@ def unix_to_ist(ts: Any, fmt: str = "%Y-%m-%d %H:%M:%S") -> str | None:
     +5:30-offset style as to_unix()."""
     if ts is None:
         return None
-    dt = datetime.fromtimestamp(ts + IST_OFFSET_SECONDS, tz=timezone.utc)
+    dt = datetime.fromtimestamp(ts + IST_OFFSET_SECONDS, tz=UTC)
     return dt.strftime(fmt)
 
 
@@ -131,7 +131,9 @@ def _session_from_class_row(row: dict[str, Any], bundle_id: Any, bundle_name: An
         "class_id": _id_text(row.get("class_id")),
         "class_name": row.get("class_name"),
         "master_batch_id": _id_text(row.get("master_batch_id")),
-        "master_batch_name": master_batch_name.strip() if isinstance(master_batch_name, str) else master_batch_name,
+        "master_batch_name": (
+            master_batch_name.strip() if isinstance(master_batch_name, str) else master_batch_name
+        ),
         "bundle_id": _text(bundle_id),
         "bundle_name": bundle_name,
         "class_date": unix_to_ist(row.get("class_date"), "%Y-%m-%d"),
@@ -207,7 +209,10 @@ class ClassSessionAttendanceCollector:
                 sessions = [
                     session
                     for row in classes
-                    if (session := _session_from_class_row(row, entry["bundle_id"], entry["bundle_name"])) is not None
+                    if (
+                        session := _session_from_class_row(row, entry["bundle_id"], entry["bundle_name"])
+                    )
+                    is not None
                 ]
                 _assign_session_numbers(sessions)
                 rows = [_row_tuple(session) for session in sessions]

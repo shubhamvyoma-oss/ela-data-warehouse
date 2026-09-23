@@ -4,7 +4,6 @@ from __future__ import annotations
 # it performs a real Edmingle login call plus a real email send by design, and
 # there is no safe way to unit test it without mocking requests/smtplib, which
 # is out of scope for this pass.
-
 import inspect
 from collections.abc import Callable
 from datetime import date
@@ -22,9 +21,9 @@ from api_scripts.attendance_data.class_session_attendance.collector import Class
 from api_scripts.corses_batches.course_batch_merge.collector import CourseBatchMergeCollector
 from api_scripts.corses_batches.course_catalogue_raw.collector import CourseCatalogueRawCollector
 from api_scripts.ela_mis_datasets.course_enrollments.collector import CourseEnrollmentsCollector
+from api_scripts.ela_mis_datasets.students.collector import StudentsCollector
 from api_scripts.enrollments_reports.collector import build_chunks
 from api_scripts.runner import collector_registry
-from api_scripts.ela_mis_datasets.students.collector import StudentsCollector
 
 
 class FakeClient:
@@ -529,7 +528,7 @@ def test_students_paginates_until_empty_page_and_extracts_custom_fields() -> Non
     assert len(rows) == 1  # the no-user_id student is skipped entirely
     row = rows[0]
     columns = calls[0]["columns"]
-    row_by_column = dict(zip(columns, row))
+    row_by_column = dict(zip(columns, row, strict=False))
     assert row_by_column["user_id"] == "1"
     assert row_by_column["name"] == "Alice"
     assert row_by_column["custom_user_name"] == "alice_uname"

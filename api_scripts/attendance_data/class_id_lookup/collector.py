@@ -2,11 +2,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from shared.config import DatabaseSettings
-from shared.database import Database
-
 from api_scripts.common.repositories import utc_iso
 from api_scripts.common.runtime import CollectorRuntime
+from shared.config import DatabaseSettings
+from shared.database import Database
 
 TABLE = "bronze.class_id_lookup"
 

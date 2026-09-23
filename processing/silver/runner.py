@@ -13,11 +13,13 @@ LOGGER = logging.getLogger("warehouse.silver")
 
 def transform_registry():
     from processing.silver.class_id_lookup import transform_class_id_lookup
+    from processing.silver.courses import transform_courses
     from processing.silver.enrollment_reports import transform_enrollment_reports
     from processing.silver.students import transform_students
 
     return {
         "class_id_lookup": transform_class_id_lookup,
+        "courses": transform_courses,
         "enrollment_reports": transform_enrollment_reports,
         "students": transform_students,
     }

@@ -58,14 +58,13 @@ updating the previous run's row in place. This is a property of the pre-existing
 definition (which this change does not modify), not of the collector logic; flagging it
 here for whoever owns downstream Silver/Gold modeling of this table.
 
-## Ships disabled
+## Registry status (updated 2026-09-23)
 
-This collector is **not** registered in `api_scripts/runner.py`'s `collector_registry()`,
-and `run_collector()` there does not yet pass a `TransformedTableRepository` into
-`CollectorRuntime` (it only wires up `bronze=BronzeRepository(...)`, not
-`transformed=...`). Wiring both of those up is required before this job can actually be
-invoked via the CLI (`warehouse_cli.py collect course_batch_merge` today would fail with
-"unknown collector"). That wiring, and adding `pandas`/`numpy` to `requirements.txt`
-(this module imports `pandas`), are left for whoever enables this job for real -- this
-change intentionally ships as inert, uncalled code so it does not run against the live
-Edmingle API or spend credits.
+`pandas`/`numpy` are in `requirements.txt`, and this collector is registered in
+`api_scripts/runner.py::collector_registry()` as `corses_batches.course_batch_merge`, with
+`TransformedTableRepository` wired into `CollectorRuntime`. It is runnable via
+`python warehouse_cli.py collect corses_batches.course_batch_merge`. It stays
+`is_enabled: false` in `services/scheduler/jobs.example.yaml` (as does every job in this
+repo) -- that flag, not registry wiring, is what gates it from running against the live
+Edmingle API. This table is also now the sole source for `silver.courses` -- see
+`processing/silver/courses.py` and `ROADMAP.md`.

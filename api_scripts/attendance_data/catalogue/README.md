@@ -69,9 +69,11 @@ documented in the `course_batch_merge` README, inherited from the pre-existing t
 definition (which this change does not modify) rather than from collector logic; flagging
 it here for whoever owns downstream Silver/Gold modeling of this table.
 
-## Ships disabled
+## Registry status (updated 2026-09-23)
 
-Adding `pandas`/`numpy` to `requirements.txt` (this module imports `pandas`) is left for
-whoever centrally manages that file -- not done as part of this change. This collector
-should not be run against the live Edmingle API until that dependency and any collector
-registry / `TransformedTableRepository` wiring needed to invoke it are confirmed in place.
+`pandas`/`numpy` are in `requirements.txt`, and this collector is registered in
+`api_scripts/runner.py::collector_registry()` as `attendance_data.catalogue`, with
+`TransformedTableRepository` wired into `CollectorRuntime`. It is runnable via
+`python warehouse_cli.py collect attendance_data.catalogue`. It stays `is_enabled: false`
+in `services/scheduler/jobs.example.yaml` (as does every job in this repo) -- that flag,
+not registry wiring, is what gates it from running against the live Edmingle API.

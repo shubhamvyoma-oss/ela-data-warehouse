@@ -17,17 +17,36 @@ actually exists.
 ## Data layers
 
 **Silver processing** (`processing/silver/`) — partially built. Typed/
-normalized transforms exist today for `students`, `class_id_lookup`, and
-`enrollment_reports` (single Bronze source each, no reconciliation needed).
-Still deferred, pending a business decision on which source is authoritative:
-- **Courses/catalogue**: 3 competing Bronze tables (`course_catalog`,
-  `course_batch_merge`, `course_catalogue_raw`) with different inclusion
-  rules (Archived batches in/out, ID-exclusion list vs. keyword filter).
+normalized transforms exist today for `students`, `class_id_lookup`,
+`enrollment_reports` (single Bronze source each, no reconciliation needed),
+and `courses` (see below — the first *reconciled* model, resolving the
+3-way catalogue overlap). Still deferred, pending a business decision on
+which source is authoritative:
 - **Attendance**: 2 sources measuring different things (`report55_batch_attendance_summary`
   + `report55_session_attendance` vs. `class_session_attendance`) — likely
   stay as separate Silver entities rather than merge, but confirm.
 - **Enrollment**: `course_enrollments` (per-class, from student sync) vs.
   `enrollment_reports` (historical event log, different endpoint).
+
+**Courses/catalogue reconciliation — resolved 2026-09-23.** 3 competing
+Bronze tables existed (`course_catalog`, `course_batch_merge`,
+`course_catalogue_raw`) with different inclusion rules (Archived batches
+in/out, ID-exclusion list vs. keyword filter). Project-owner decision,
+implemented in `processing/silver/courses.py` / migration
+`009_silver_courses.sql`:
+1. Source is `bronze.course_batch_merge` only -- `course_catalog` and
+   `course_catalogue_raw` are not inputs to `silver.courses`.
+2. Archived batches are excluded (Active/Completed only), filtered in
+   Silver even though the Bronze source itself keeps Archived for its own
+   `Is_Latest_Batch` history computation.
+3. Junk/test-batch filtering trusts `course_batch_merge`'s keyword rule
+   (already applied at collection time); `course_catalog`'s fixed
+   20-batch-id exclusion list is not reapplied.
+
+`course_catalog` and `course_catalogue_raw` remain in Bronze, unreconciled,
+per the original per-job READMEs -- only `silver.courses` had to pick one
+source; Bronze keeps all three for anyone who needs the original scripts'
+exact historical behavior.
 
 **Gold processing** (`processing/gold/`, kept as an empty folder — the next
 one to fill in). Needs, before any code is written: approved KPI

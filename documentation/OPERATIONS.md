@@ -36,3 +36,22 @@ ORDER BY resource;
 ```
 
 Audit and logs intentionally exclude raw payloads. Access to Bronze and rejected records should be restricted because they may contain personal data.
+
+## Scheduled jobs actually running on the VPS
+
+**Not** managed by services/scheduler (still fully inert, see ROADMAP.md) --
+these are plain crontab entries on the projectdev user, since sudo/systemd
+access isn't available and this is a single job, not a case for standing
+up new infrastructure. `crontab -l` on the VPS is the source of truth;
+this section exists so the job isn't forgotten (it lives outside git).
+
+| Job | Schedule | Command |
+| --- | --- | --- |
+| `silver_enrollments` refresh | every minute | `cd /home/projectdev/ela-data-warehouse && docker compose run --rm -T warehouse-cli python warehouse_cli.py transform enrollments` |
+
+Logs to `logs/enrollments_transform_cron.log` in the repo root (gitignored,
+VPS-local). Re-running this transform is always safe -- it's a full
+idempotent re-scan of bronze.enrollment_reports (static, ~8.5k rows) and
+bronze.webhook_events (growing; filtered to transaction.user_purchase_completed,
+indexed -- see migration 013_webhook_events_transaction_index.sql), upserted
+into silver.enrollments keyed on enrollment_id.

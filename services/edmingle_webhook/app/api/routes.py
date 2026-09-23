@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hmac
 import logging
 
 from flask import Flask, Response, current_app, jsonify, request
@@ -129,7 +130,7 @@ def register_routes(app: Flask) -> None:
         if not settings.admin_token:
             return jsonify({"status": "disabled"}), 403
         supplied = request.headers.get(settings.admin_token_header, "")
-        if supplied != settings.admin_token:
+        if not hmac.compare_digest(supplied, settings.admin_token):
             return jsonify({"status": "unauthorized"}), 401
         database: DatabasePool = current_app.extensions["database"]
         queue: FileEventQueue = current_app.extensions["queue"]

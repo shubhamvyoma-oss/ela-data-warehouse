@@ -62,6 +62,19 @@ size RATE_LIMIT_REQUESTS with this in mind, and treat a fix (e.g. moving
 counters into the existing Postgres connection) as a future improvement, not
 a currently-guaranteed hard limit.
 
+## Replay Protection (HMAC nonce)
+
+`_NonceStore` (app/security/auth.py) has the identical per-process,
+in-memory limitation as the rate limiter above: each of gunicorn's worker
+processes holds its own independent set of "already seen" nonces, so a
+replayed request that happens to land on a different worker than the
+original is not rejected. This is currently low-risk since
+WEBHOOK_AUTH_MODE is "disabled" in production today -- but if
+WEBHOOK_AUTH_MODE=hmac is ever enabled for real, size expectations and any
+compensating control (e.g. a short signature_tolerance_seconds window)
+accordingly, and treat moving nonce state into Postgres as the same kind of
+future improvement as the rate limiter's.
+
 ## Request Lifecycle
 
 ```text

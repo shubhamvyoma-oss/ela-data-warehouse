@@ -54,6 +54,23 @@ class WebhookAuthenticator:
 
 
 class _NonceStore:
+    """Per-process, in-memory HMAC-nonce replay guard.
+
+    KNOWN LIMITATION -- same class of gap as InMemoryRateLimiter (see
+    app/security/rate_limit.py and docs/architecture.md's Rate Limiting
+    section): state lives in plain process memory, not a shared store. The
+    Dockerfile runs gunicorn with multiple worker processes (currently 2),
+    each holding its own independent nonce set for the same client. A nonce
+    already "seen" by one worker is NOT rejected if the replayed request
+    happens to land on a different worker -- replay protection is therefore
+    weaker than WEBHOOK_AUTH_MODE=hmac alone would suggest. Currently
+    low-risk in practice: WEBHOOK_AUTH_MODE is "disabled" in production
+    today (see .env), so this path isn't live. Documented here, rather than
+    fixed with a new external dependency (e.g. Redis), for the same reason
+    the rate limiter accepts its equivalent gap -- flag before enabling
+    WEBHOOK_AUTH_MODE=hmac for real.
+    """
+
     def __init__(self) -> None:
         self._seen: dict[str, float] = {}
         self._lock = threading.Lock()

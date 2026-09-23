@@ -6,7 +6,16 @@ from processing.silver.runner import transform_registry
 
 
 def test_transform_registry_has_expected_entries() -> None:
-    assert set(transform_registry()) == {"students", "class_id_lookup", "enrollment_reports", "courses"}
+    assert set(transform_registry()) == {
+        "students",
+        "class_id_lookup",
+        "enrollment_reports",
+        "courses",
+        "course_enrollments",
+        "report55_batch_attendance_summary",
+        "report55_session_attendance",
+        "class_session_attendance",
+    }
 
 
 def test_each_transform_has_the_expected_signature() -> None:

@@ -16,17 +16,15 @@ actually exists.
 
 ## Data layers
 
-**Silver processing** (`processing/silver/`) — partially built. Typed/
-normalized transforms exist today for `students`, `class_id_lookup`,
-`enrollment_reports` (single Bronze source each, no reconciliation needed),
-and `courses` (see below — the first *reconciled* model, resolving the
-3-way catalogue overlap). Still deferred, pending a business decision on
-which source is authoritative:
-- **Attendance**: 2 sources measuring different things (`report55_batch_attendance_summary`
-  + `report55_session_attendance` vs. `class_session_attendance`) — likely
-  stay as separate Silver entities rather than merge, but confirm.
-- **Enrollment**: `course_enrollments` (per-class, from student sync) vs.
-  `enrollment_reports` (historical event log, different endpoint).
+**Silver processing** (`processing/silver/`) — fully built for every
+Bronze table that currently exists. Typed/normalized transforms exist for
+`students`, `class_id_lookup`, `enrollment_reports`, `course_enrollments`,
+`report55_batch_attendance_summary`, `report55_session_attendance`, and
+`class_session_attendance` (each single Bronze source, no reconciliation
+needed), plus `courses` (see below — the one *reconciled* model, resolving
+the 3-way catalogue overlap). Nothing is deferred here anymore; the next
+Silver work is only for API jobs that don't exist yet (`sessions/`,
+`teachers/`, `transactions/`, still reserved pending endpoint contracts).
 
 **Courses/catalogue reconciliation — resolved 2026-09-23.** 3 competing
 Bronze tables existed (`course_catalog`, `course_batch_merge`,
@@ -47,6 +45,25 @@ implemented in `processing/silver/courses.py` / migration
 per the original per-job READMEs -- only `silver.courses` had to pick one
 source; Bronze keeps all three for anyone who needs the original scripts'
 exact historical behavior.
+
+**Attendance and enrollment — resolved 2026-09-23: kept separate, not
+merged.** Both pairs measure genuinely different things at different
+grains (confirmed by the project owner, matching this file's own earlier
+recommendation):
+- **Attendance**: `report55_batch_attendance_summary` (student-mark
+  rollups from report_type=55, session numbered per `batch_id`) and
+  `class_session_attendance` (pre-aggregated totals from
+  `/organization/attendances`, session numbered per `master_batch_id`) are
+  now both typed Silver models (`processing/silver/report55_batch_attendance_summary.py`,
+  `processing/silver/report55_session_attendance.py`,
+  `processing/silver/class_session_attendance.py`) -- no merge attempted.
+- **Enrollment**: `silver.course_enrollments` (per-(student, class)
+  attendance summary from the student sync) is now built alongside the
+  pre-existing `silver.enrollment_reports` (historical per-enrollment-event
+  log, different endpoint) -- kept as two separate models, not merged.
+
+See migration `010_silver_attendance_enrollment.sql` for the full table
+definitions.
 
 **Gold processing** (`processing/gold/`, kept as an empty folder — the next
 one to fill in). Needs, before any code is written: approved KPI

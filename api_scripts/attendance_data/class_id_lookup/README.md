@@ -80,11 +80,12 @@ The original script hand-rolled a ~24-calls/min limiter and its own HTTP-429
 `EDMINGLE_MIN_REQUEST_INTERVAL_SECONDS` spacing and retries 429/5xx responses with backoff --
 no separate rate limiter is reimplemented in this collector.
 
-## Status
+## Status (updated 2026-09-23)
 
-Ships **disabled** (`system.api_scripts.is_enabled = false` / `system.pipelines.is_enabled =
-false`, set in migration 006). Not yet wired into `api_scripts/runner.py`'s
-`collector_registry()`, so it cannot be invoked via `warehouse_cli.py collect class_id_lookup`
-until that registration (and passing a `TransformedTableRepository` into the
-`CollectorRuntime` the runner constructs) is done as a follow-up -- intentionally out of scope
-here per the task boundaries (this change touches only this job's own three files).
+Registered in `api_scripts/runner.py`'s `collector_registry()` as
+`attendance_data.class_id_lookup`, with `TransformedTableRepository` wired into the
+`CollectorRuntime` the runner constructs. Runnable via `python warehouse_cli.py collect
+attendance_data.class_id_lookup`. It still ships **disabled**
+(`system.api_scripts.is_enabled = false` / `system.pipelines.is_enabled = false`, and
+`is_enabled: false` in `services/scheduler/jobs.example.yaml`) -- that flag, not registry
+wiring, is what gates it from running against the live Edmingle API.

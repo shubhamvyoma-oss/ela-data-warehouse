@@ -94,13 +94,11 @@ byte-offset-precision resume.
 - No standalone `.chunks.json` plan file -- `build_chunks()` is cheap to recompute, so
   it is simply called again on every run rather than persisted and reloaded.
 
-## Status: disabled
+## Status (updated 2026-09-23)
 
-This collector exists but is **not** wired into `api_scripts/runner.py`:
-`collector_registry()` does not list `"enrollment_reports"`, and the `CollectorRuntime`
-built there is constructed without a `TransformedTableRepository` (required by
-`commit_rows()`). It cannot be invoked via `warehouse_cli.py collect` in its current
-state, and it must never be pointed at the real Edmingle API without deliberately
-enabling it first -- each run costs real API credits. Wiring it in is a deliberate
-follow-up once this job is reviewed, matching the same "ships disabled by construction"
-pattern already used for `course_enrollments` and `students`.
+Registered in `api_scripts/runner.py`'s `collector_registry()` as `enrollment_reports`, with
+`TransformedTableRepository` wired into the `CollectorRuntime` the runner constructs. Runnable
+via `python warehouse_cli.py collect enrollment_reports`. It stays `is_enabled: false` in
+`services/scheduler/jobs.example.yaml` (as does every job in this repo) -- that flag, not
+registry wiring, is what gates it from running against the live Edmingle API and spending real
+credits.

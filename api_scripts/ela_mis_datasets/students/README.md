@@ -71,10 +71,10 @@ The checkpoint written on each page commit is:
 Auth (`apikey`, `ORGID`) and `organization_id` come from `EdmingleSettings.from_environment()`,
 shared with every other collector in `api_scripts/`.
 
-## Status
+## Status (updated 2026-09-23)
 
-This collector is not yet registered in `api_scripts/runner.py`'s `collector_registry()` and
-`CollectorRuntime` is not yet constructed with a `TransformedTableRepository` in
-`run_collector()` -- both are out of scope for this change and are left for the wiring step that
-enables the job end-to-end. Until then, `StudentsCollector` exists as a complete, syntax-checked
-implementation of the `Collector` protocol but cannot be invoked via the CLI.
+Registered in `api_scripts/runner.py`'s `collector_registry()` as `ela_mis_datasets.students`,
+with `TransformedTableRepository` wired into the `CollectorRuntime` `run_collector()`
+constructs. Runnable via `python warehouse_cli.py collect ela_mis_datasets.students`. It stays
+`is_enabled: false` in `services/scheduler/jobs.example.yaml` (as does every job in this repo)
+-- that flag, not registry wiring, is what gates it from running against the live Edmingle API.

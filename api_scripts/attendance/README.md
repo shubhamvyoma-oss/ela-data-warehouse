@@ -176,21 +176,16 @@ version of this collector.
 Auth (`apikey`, `ORGID`) and `organization_id` come from `EdmingleSettings.from_environment()`,
 shared with every other collector in `api_scripts/`.
 
-## Known gap: not yet wired for a live run
+## Registry status (updated 2026-09-23)
 
-`AttendanceCollector` is already registered in `api_scripts/runner.py`'s `collector_registry()`,
-but `run_collector()` constructs `CollectorRuntime` with only `bronze=BronzeRepository(database)`
-and no `transformed=TransformedTableRepository(database)`. Calling `commit_rows(...)` (as this
-version now does, for both tables) against that runtime raises
-`RuntimeError("CollectorRuntime was constructed without a TransformedTableRepository")`. This
-mirrors the same gap already called out in `api_scripts/ela_mis_datasets/students/README.md` and is left for the
-shared wiring step that enables all `commit_rows`-based jobs end-to-end -- out of scope for this
-change, which touches only `collector.py` and this README.
+`AttendanceCollector` is registered in `api_scripts/runner.py`'s `collector_registry()` as
+`attendance`, and `run_collector()` constructs `CollectorRuntime` with
+`transformed=TransformedTableRepository(database)` wired in, so `commit_rows(...)` works end to
+end. It is runnable via `python warehouse_cli.py collect attendance`. It stays
+`is_enabled: false` in `services/scheduler/jobs.example.yaml` (as does every job in this repo) --
+that flag, not registry wiring, is what gates it from running against the live Edmingle API.
 
 ## Dependencies
 
 This collector needs `pandas` and `numpy`, matching the other pandas-based ported jobs
-(`course_batch_merge`, `course_catalogue_raw`, which already `import pandas` today). Neither
-`pandas` nor `numpy` is currently listed in `requirements.txt` (which only has
-`psycopg2-binary`, `requests`, `PyYAML`, `openpyxl`) -- both need adding there. Tracked
-separately; not modified by this change.
+(`course_batch_merge`, `course_catalogue_raw`). Both are listed in `requirements.txt`.

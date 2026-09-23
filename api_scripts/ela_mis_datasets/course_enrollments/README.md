@@ -75,12 +75,11 @@ separately, makes the same simplification for the same reason.
   belongs to the shared runner/observability layer (`audit.pipeline_runs`,
   `audit.events`), not to an individual collector.
 
-## Status: disabled
+## Status (updated 2026-09-23)
 
-This collector exists but is **not** wired into `api_scripts/runner.py`:
-`collector_registry()` does not list `"course_enrollments"`, and the
-`CollectorRuntime` built there is constructed without a `TransformedTableRepository`
-(required by `commit_rows()`). It cannot be invoked via `warehouse_cli.py collect` in
-its current state. Wiring both in -- alongside the same wiring the `students` job will
-need -- is a deliberate follow-up once this job is reviewed, so it ships disabled by
-construction rather than by a feature flag.
+Registered in `api_scripts/runner.py`'s `collector_registry()` as
+`ela_mis_datasets.course_enrollments`, with `TransformedTableRepository` wired into the
+`CollectorRuntime` `run_collector()` constructs. Runnable via `python warehouse_cli.py collect
+ela_mis_datasets.course_enrollments`. It stays `is_enabled: false` in
+`services/scheduler/jobs.example.yaml` (as does every job in this repo) -- that flag, not
+registry wiring, is what gates it from running against the live Edmingle API.

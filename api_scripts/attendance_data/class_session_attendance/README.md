@@ -144,13 +144,14 @@ code is logged and treated as "no sessions for this class_id" rather than raised
 original's `if data.get("code") != 200: ... return []` behavior (it does not abort the whole
 run over one class_id's bad response).
 
-## Status
+## Status (updated 2026-09-23)
 
-Ships **disabled** (`system.api_scripts.is_enabled = false` / `system.pipelines.is_enabled =
-false`, set in migration 006). Not yet wired into `api_scripts/runner.py`'s
-`collector_registry()`, so it cannot be invoked via `warehouse_cli.py collect
-class_session_attendance` until that registration (and passing a `TransformedTableRepository`
-into the `CollectorRuntime` the runner constructs) is done as a follow-up -- intentionally out of
-scope here per the task boundaries (this change touches only this job's own three files). It
-also must not be run against the real Edmingle API until that follow-up and a deliberate,
-credit-aware go-ahead -- this endpoint is metered.
+Registered in `api_scripts/runner.py`'s `collector_registry()` as
+`attendance_data.class_session_attendance`, with `TransformedTableRepository` wired into the
+`CollectorRuntime` the runner constructs. Runnable via `python warehouse_cli.py collect
+attendance_data.class_session_attendance`. It still ships **disabled**
+(`system.api_scripts.is_enabled = false` / `system.pipelines.is_enabled = false`, and
+`is_enabled: false` in `services/scheduler/jobs.example.yaml`) -- that flag, not registry
+wiring, is what gates it from running against the real Edmingle API. This endpoint is metered,
+so flipping it on needs a deliberate, credit-aware go-ahead, not just the registry work being
+done.

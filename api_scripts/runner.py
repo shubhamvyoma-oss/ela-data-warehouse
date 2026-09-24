@@ -21,21 +21,21 @@ LOGGER = logging.getLogger("warehouse.runner")
 
 
 def collector_registry():
-    from api_scripts.attendance.collector import AttendanceCollector
-    from api_scripts.attendance_data.catalogue.collector import CourseCatalogueCollector
-    from api_scripts.attendance_data.class_id_lookup.collector import ClassIdLookupCollector
-    from api_scripts.attendance_data.class_session_attendance.collector import (
+    from api_scripts.attendance.attendance_collector import AttendanceCollector
+    from api_scripts.attendance_data.catalogue.course_catalogue_collector import CourseCatalogueCollector
+    from api_scripts.attendance_data.class_id_lookup.class_id_lookup_collector import ClassIdLookupCollector
+    from api_scripts.attendance_data.class_session_attendance.class_session_attendance_collector import (
         ClassSessionAttendanceCollector,
     )
-    from api_scripts.courses_batches.course_batch_merge.collector import CourseBatchMergeCollector
-    from api_scripts.courses_batches.course_catalogue_raw.collector import (
+    from api_scripts.courses_batches.course_batch_merge.course_batch_merge_collector import CourseBatchMergeCollector
+    from api_scripts.courses_batches.course_catalogue_raw.course_catalogue_raw_collector import (
         CourseCatalogueRawCollector,
     )
-    from api_scripts.ela_mis_datasets.course_enrollments.collector import (
+    from api_scripts.ela_mis_datasets.course_enrollments.course_enrollments_collector import (
         CourseEnrollmentsCollector,
     )
-    from api_scripts.ela_mis_datasets.students.collector import StudentsCollector
-    from api_scripts.enrollments_reports.collector import EnrollmentReportsCollector
+    from api_scripts.ela_mis_datasets.students.students_collector import StudentsCollector
+    from api_scripts.enrollments_reports.enrollments_reports_collector import EnrollmentReportsCollector
 
     return {
         "attendance": AttendanceCollector,

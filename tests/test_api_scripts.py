@@ -4,9 +4,9 @@ from __future__ import annotations
 # it performs a real Edmingle login call plus a real email send by design, and
 # there is no safe way to unit test it without mocking requests/smtplib, which
 # is out of scope for this pass.
-import inspect
 from collections.abc import Callable
 from datetime import date
+import inspect
 from types import SimpleNamespace
 from typing import Any
 
@@ -17,7 +17,9 @@ from api_scripts.attendance.attendance import (
 )
 from api_scripts.attendance_data.catalogue.course_catalogue import CourseCatalogueJob
 from api_scripts.attendance_data.class_id_lookup.class_id_lookup import ClassIdLookupJob
-from api_scripts.attendance_data.class_session_attendance.class_session_attendance import ClassSessionAttendanceJob
+from api_scripts.attendance_data.class_session_attendance.class_session_attendance import (
+    ClassSessionAttendanceJob,
+)
 from api_scripts.courses_batches.course_batch_merge.course_batch_merge import CourseBatchMergeJob
 from api_scripts.courses_batches.course_catalogue_raw.course_catalogue_raw import CourseCatalogueRawJob
 from api_scripts.ela_mis_datasets.course_enrollments.course_enrollments import CourseEnrollmentsJob

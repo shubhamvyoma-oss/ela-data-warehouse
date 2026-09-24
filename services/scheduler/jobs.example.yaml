@@ -8,12 +8,12 @@ jobs:
     collector: attendance_data.catalogue
     is_enabled: false
     interval_minutes: 10080
-  - name: corses_batches_course_batch_merge_weekly
-    collector: corses_batches.course_batch_merge
+  - name: courses_batches_course_batch_merge_weekly
+    collector: courses_batches.course_batch_merge
     is_enabled: false
     interval_minutes: 10080
-  - name: corses_batches_course_catalogue_raw_weekly
-    collector: corses_batches.course_catalogue_raw
+  - name: courses_batches_course_catalogue_raw_weekly
+    collector: courses_batches.course_catalogue_raw
     is_enabled: false
     interval_minutes: 10080
   - name: attendance_data_class_id_lookup_weekly

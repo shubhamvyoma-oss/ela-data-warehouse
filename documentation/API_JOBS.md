@@ -8,8 +8,8 @@ Each API source has a dedicated folder under `api_scripts/` and exposes a collec
 | `attendance_data.catalogue` | `attendance_data/catalogue/` | Institute course catalogue, merge/exclusion/latest-batch logic | `course_catalog` |
 | `attendance_data.class_id_lookup` | `attendance_data/class_id_lookup/` | Resolves `class_id`(s) per batch (reads `course_catalog`) | `class_id_lookup` |
 | `attendance_data.class_session_attendance` | `attendance_data/class_session_attendance/` | Per-session attendance per `class_id` (reads `class_id_lookup`) | `class_session_attendance` |
-| `corses_batches.course_batch_merge` | `corses_batches/course_batch_merge/` | Paged active, archived, and completed master batches | `course_batch_merge` |
-| `corses_batches.course_catalogue_raw` | `corses_batches/course_catalogue_raw/` | Flattened catalogue endpoint, dynamic columns | `course_catalogue_raw` |
+| `courses_batches.course_batch_merge` | `courses_batches/course_batch_merge/` | Paged active, archived, and completed master batches | `course_batch_merge` |
+| `courses_batches.course_catalogue_raw` | `courses_batches/course_catalogue_raw/` | Flattened catalogue endpoint, dynamic columns | `course_catalogue_raw` |
 | `ela_mis_datasets.students` | `ela_mis_datasets/students/` | Paged class students, one row per student | `students` |
 | `ela_mis_datasets.course_enrollments` | `ela_mis_datasets/course_enrollments/` | Per-(student, class) attendance summary (reads `students` for eligible user_ids) | `course_enrollments` |
 | `enrollment_reports` | `enrollments_reports/` | Date-chunked row-level enrollment report | `enrollment_reports` |

@@ -18,8 +18,8 @@ from api_scripts.attendance.collector import (
 from api_scripts.attendance_data.catalogue.collector import CourseCatalogueCollector
 from api_scripts.attendance_data.class_id_lookup.collector import ClassIdLookupCollector
 from api_scripts.attendance_data.class_session_attendance.collector import ClassSessionAttendanceCollector
-from api_scripts.corses_batches.course_batch_merge.collector import CourseBatchMergeCollector
-from api_scripts.corses_batches.course_catalogue_raw.collector import CourseCatalogueRawCollector
+from api_scripts.courses_batches.course_batch_merge.collector import CourseBatchMergeCollector
+from api_scripts.courses_batches.course_catalogue_raw.collector import CourseCatalogueRawCollector
 from api_scripts.ela_mis_datasets.course_enrollments.collector import CourseEnrollmentsCollector
 from api_scripts.ela_mis_datasets.students.collector import StudentsCollector
 from api_scripts.enrollments_reports.collector import build_chunks
@@ -397,7 +397,7 @@ def test_course_batch_merge_fetches_all_statuses_and_filters_test_batches_and_co
 
     CourseBatchMergeCollector().run(runtime, {})
 
-    assert CourseBatchMergeCollector.name == "corses_batches.course_batch_merge"
+    assert CourseBatchMergeCollector.name == "courses_batches.course_batch_merge"
 
     masterbatch_calls = [(p, params) for p, params in client.calls if p == "/short/masterbatch"]
     statuses_called = sorted(params["status"] for _p, params in masterbatch_calls)
@@ -435,7 +435,7 @@ def test_course_catalogue_raw_flattens_and_hashes_rows() -> None:
 
     CourseCatalogueRawCollector().run(runtime, {})
 
-    assert CourseCatalogueRawCollector.name == "corses_batches.course_catalogue_raw"
+    assert CourseCatalogueRawCollector.name == "courses_batches.course_catalogue_raw"
 
     assert client.calls == [
         ("/institute/683/courses/catalogue", {"institution_id": "683"})

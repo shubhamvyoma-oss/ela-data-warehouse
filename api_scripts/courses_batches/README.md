@@ -8,8 +8,8 @@ whether Archived batches are included). See `ROADMAP.md` for the pending
 business decision on which source should become the single authoritative
 `silver.courses` model.
 
-- `corses_batches.course_batch_merge` -> `bronze.course_batch_merge`
-- `corses_batches.course_catalogue_raw` -> `bronze.course_catalogue_raw`
+- `courses_batches.course_batch_merge` -> `bronze.course_batch_merge`
+- `courses_batches.course_catalogue_raw` -> `bronze.course_catalogue_raw`
 
 See each subfolder's own README for endpoint/config/table detail. This is
 one of six top-level folders under `api_scripts/`, each mapping 1:1 to one

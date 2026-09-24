@@ -44,8 +44,8 @@ covers more than one job nests each job in its own subfolder with a
 | `attendance_data.catalogue` | `api_scripts/attendance_data/catalogue/` | `course_catalog` |
 | `attendance_data.class_id_lookup` | `api_scripts/attendance_data/class_id_lookup/` | `class_id_lookup` |
 | `attendance_data.class_session_attendance` | `api_scripts/attendance_data/class_session_attendance/` | `class_session_attendance` |
-| `corses_batches.course_batch_merge` | `api_scripts/corses_batches/course_batch_merge/` | `course_batch_merge` |
-| `corses_batches.course_catalogue_raw` | `api_scripts/corses_batches/course_catalogue_raw/` | `course_catalogue_raw` |
+| `courses_batches.course_batch_merge` | `api_scripts/courses_batches/course_batch_merge/` | `course_batch_merge` |
+| `courses_batches.course_catalogue_raw` | `api_scripts/courses_batches/course_catalogue_raw/` | `course_catalogue_raw` |
 | `ela_mis_datasets.students` | `api_scripts/ela_mis_datasets/students/` | `students` |
 | `ela_mis_datasets.course_enrollments` | `api_scripts/ela_mis_datasets/course_enrollments/` | `course_enrollments` |
 | `enrollment_reports` | `api_scripts/enrollments_reports/` | `enrollment_reports` |

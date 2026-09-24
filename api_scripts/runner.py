@@ -27,8 +27,8 @@ def collector_registry():
     from api_scripts.attendance_data.class_session_attendance.collector import (
         ClassSessionAttendanceCollector,
     )
-    from api_scripts.corses_batches.course_batch_merge.collector import CourseBatchMergeCollector
-    from api_scripts.corses_batches.course_catalogue_raw.collector import (
+    from api_scripts.courses_batches.course_batch_merge.collector import CourseBatchMergeCollector
+    from api_scripts.courses_batches.course_catalogue_raw.collector import (
         CourseCatalogueRawCollector,
     )
     from api_scripts.ela_mis_datasets.course_enrollments.collector import (
@@ -42,8 +42,8 @@ def collector_registry():
         "attendance_data.catalogue": CourseCatalogueCollector,
         "attendance_data.class_id_lookup": ClassIdLookupCollector,
         "attendance_data.class_session_attendance": ClassSessionAttendanceCollector,
-        "corses_batches.course_batch_merge": CourseBatchMergeCollector,
-        "corses_batches.course_catalogue_raw": CourseCatalogueRawCollector,
+        "courses_batches.course_batch_merge": CourseBatchMergeCollector,
+        "courses_batches.course_catalogue_raw": CourseCatalogueRawCollector,
         "ela_mis_datasets.students": StudentsCollector,
         "ela_mis_datasets.course_enrollments": CourseEnrollmentsCollector,
         "enrollment_reports": EnrollmentReportsCollector,

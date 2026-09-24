@@ -11,7 +11,7 @@ endpoint/config/table detail):
 | --- | --- | --- |
 | `attendance/` | `attendance` | `bronze.report55_batch_attendance_summary`, `bronze.report55_session_attendance` |
 | `attendance_data/` | `attendance_data.catalogue`, `attendance_data.class_id_lookup`, `attendance_data.class_session_attendance` | `bronze.course_catalog`, `bronze.class_id_lookup`, `bronze.class_session_attendance` |
-| `corses_batches/` | `corses_batches.course_batch_merge`, `corses_batches.course_catalogue_raw` | `bronze.course_batch_merge`, `bronze.course_catalogue_raw` |
+| `courses_batches/` | `courses_batches.course_batch_merge`, `courses_batches.course_catalogue_raw` | `bronze.course_batch_merge`, `bronze.course_catalogue_raw` |
 | `ela_mis_datasets/` | `ela_mis_datasets.students`, `ela_mis_datasets.course_enrollments` | `bronze.students`, `bronze.course_enrollments` |
 | `enrollments_reports/` | `enrollment_reports` | `bronze.enrollment_reports` |
 | `api_key_manager/` | not a collector -- `ApiKeyLifecycle` used by every run | `system.api_credentials` (metadata only, never the key value) |

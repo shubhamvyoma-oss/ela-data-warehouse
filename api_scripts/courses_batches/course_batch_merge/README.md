@@ -61,9 +61,9 @@ here for whoever owns downstream Silver/Gold modeling of this table.
 ## Registry status (updated 2026-09-23)
 
 `pandas`/`numpy` are in `requirements.txt`, and this collector is registered in
-`api_scripts/runner.py::collector_registry()` as `corses_batches.course_batch_merge`, with
+`api_scripts/runner.py::collector_registry()` as `courses_batches.course_batch_merge`, with
 `TransformedTableRepository` wired into `CollectorRuntime`. It is runnable via
-`python warehouse_cli.py collect corses_batches.course_batch_merge`. It stays
+`python warehouse_cli.py collect courses_batches.course_batch_merge`. It stays
 `is_enabled: false` in `services/scheduler/jobs.example.yaml` (as does every job in this
 repo) -- that flag, not registry wiring, is what gates it from running against the live
 Edmingle API. This table is also now the sole source for `silver.courses` -- see

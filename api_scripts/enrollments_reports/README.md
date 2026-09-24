@@ -37,7 +37,7 @@ Optional:
   the `students_per_page`/`batches_per_page` defaults already used elsewhere in
   `EdmingleSettings`.
 
-`build_chunks(start_date, end_date, chunk_days)` in `enrollments_reports_collector.py` splits that inclusive
+`build_chunks(start_date, end_date, chunk_days)` in `enrollments_reports.py` splits that inclusive
 range into windows of at most `chunk_days` days each -- ported near-verbatim from the
 original `edmingle_chunker.build_chunks` (the only change: raising `ValueError` instead
 of calling `sys.exit()`, since this runs inside a collector rather than a standalone CLI
@@ -62,7 +62,7 @@ shared `require_record_list()` helper.
 
 ## Field mapping and `NULL` handling
 
-`COLUMNS` in `enrollments_reports_collector.py` is a direct 1:1 port of `FIELDS` from the original
+`COLUMNS` in `enrollments_reports.py` is a direct 1:1 port of `FIELDS` from the original
 `edmingle_constants.py` -- same 22 columns, same order. Extra API fields are dropped;
 a field missing from a `studentlist` row is treated the same as one present with a
 `None` value.

@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+import inspect
+
 # NOTE: api_scripts.api_key_manager.generate is intentionally NOT tested here --
 # it performs a real Edmingle login call plus a real email send by design, and
 # there is no safe way to unit test it without mocking requests/smtplib, which
 # is out of scope for this pass.
 from collections.abc import Callable
 from datetime import date
-import inspect
 from types import SimpleNamespace
 from typing import Any
 

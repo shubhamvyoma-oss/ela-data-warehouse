@@ -40,7 +40,7 @@ The audited VPS currently has insufficient free disk for the historical attendan
    docker compose --profile tools run --rm warehouse-cli
    ```
 
-6. Run one collector manually with a controlled time window.
+6. Run one job manually with a controlled time window.
 
    ```bash
    docker compose --profile tools run --rm warehouse-cli \

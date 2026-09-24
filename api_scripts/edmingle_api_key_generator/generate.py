@@ -20,7 +20,7 @@ PostgreSQL, logs, audit events, YAML, or Git." The database write this
 module performs carries only lifecycle metadata (expires_at, status) --
 never the key itself.
 
-Unlike the read-only, API-key-authenticated collectors elsewhere in
+Unlike the read-only, API-key-authenticated jobs elsewhere in
 api_scripts/, this module authenticates with a username and password. It
 must never be invoked as part of routine/automatic pipeline runs or tests --
 only deliberately, by an operator who intends to rotate the key.
@@ -160,7 +160,7 @@ def send_api_key_email(api_key: str, generated_at: datetime | None = None) -> No
     """Send the key once. Raise on any failure instead of swallowing it.
 
     This deliberately differs from the silent-catch-and-continue philosophy
-    used by other collectors in this repo: the entire point of this run is
+    used by other jobs in this repo: the entire point of this run is
     to deliver the key to an operator, so a delivery failure must surface
     as a hard error rather than a quiet log line.
     """

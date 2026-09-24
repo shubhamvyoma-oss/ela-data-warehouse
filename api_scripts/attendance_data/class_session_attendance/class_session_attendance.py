@@ -6,11 +6,11 @@ from datetime import UTC, datetime
 from typing import Any
 
 from api_scripts.common.repositories import utc_iso
-from api_scripts.common.runtime import CollectorRuntime
+from api_scripts.common.runtime import JobRuntime
 from shared.config import DatabaseSettings
 from shared.database import Database
 
-LOGGER = logging.getLogger("warehouse.collector")
+LOGGER = logging.getLogger("warehouse.job")
 
 TABLE = "bronze.class_session_attendance"
 
@@ -174,7 +174,7 @@ def _row_tuple(session: dict[str, Any]) -> tuple[Any, ...]:
     return tuple(session[column] for column in COLUMNS)
 
 
-class ClassSessionAttendanceCollector:
+class ClassSessionAttendanceJob:
     """Pulls session-wise attendance for every class_id in
     bronze.class_id_lookup via GET /organization/attendances, direct port of
     'Attendance data/build_session_attendance.py' (Stage 3 of the legacy
@@ -183,14 +183,14 @@ class ClassSessionAttendanceCollector:
     sessions_to_dataframe, IST helpers, status classification -- not that
     script's own standalone spot-check CLI mode).
 
-    Depends on the `class_id_lookup` collector having already populated
+    Depends on the `class_id_lookup` job having already populated
     bronze.class_id_lookup -- see README.md.
     """
 
     name = "attendance_data.class_session_attendance"
     checkpoint_partition_key = "default"
 
-    def run(self, runtime: CollectorRuntime, checkpoint: dict[str, Any]) -> None:
+    def run(self, runtime: JobRuntime, checkpoint: dict[str, Any]) -> None:
         start_ts, end_ts = _date_window()
 
         lookup_entries = self._load_class_id_lookup()
@@ -233,7 +233,7 @@ class ClassSessionAttendanceCollector:
             )
 
     def _fetch_org_attendances(
-        self, runtime: CollectorRuntime, class_id: str, start_ts: int, end_ts: int
+        self, runtime: JobRuntime, class_id: str, start_ts: int, end_ts: int
     ) -> list[dict[str, Any]]:
         """GET /organization/attendances. Direct port of
         fetch_org_attendances() from attendance_crossvalidation.py.
@@ -280,7 +280,7 @@ class ClassSessionAttendanceCollector:
         bronze.class_id_lookup -- the class_id_lookup job's output table --
         instead of the original script's class_id_lookup.csv. Read-only
         lookup against an upstream job's table, so it uses its own
-        short-lived Database connection rather than CollectorRuntime's
+        short-lived Database connection rather than JobRuntime's
         write-oriented repositories (same pattern as class_id_lookup's own
         read of bronze.course_catalog, and course_enrollments' read of
         bronze.students).

@@ -8,7 +8,7 @@ from typing import Any
 
 import yaml
 
-from api_scripts.runner import collector_registry, run_collector
+from api_scripts.runner import job_registry, run_job
 from shared.config import DatabaseSettings, WarehouseSettings
 from shared.database import Database
 from shared.logging import configure_logging
@@ -30,26 +30,26 @@ def load_schedule(path: Path) -> tuple[int, list[dict[str, Any]]]:
     poll_seconds = int(payload.get("poll_seconds", 30))
     if poll_seconds < 5 or poll_seconds > 300:
         raise ValueError("poll_seconds must be between 5 and 300")
-    available = set(collector_registry())
+    available = set(job_registry())
     seen: set[str] = set()
     jobs: list[dict[str, Any]] = []
     for raw in payload["jobs"]:
         if not isinstance(raw, dict):
             raise ValueError("each scheduler job must be an object")
         name = str(raw.get("name", "")).strip()
-        collector = str(raw.get("collector", "")).strip()
+        job_key = str(raw.get("job_key", "")).strip()
         interval = int(raw.get("interval_minutes", 0))
         if not name or name in seen:
             raise ValueError("scheduler job names must be present and unique")
-        if collector not in available:
-            raise ValueError(f"scheduler job {name!r} uses unknown collector {collector!r}")
+        if job_key not in available:
+            raise ValueError(f"scheduler job {name!r} uses unknown job {job_key!r}")
         if interval < 1 or interval > 525600:
             raise ValueError(f"scheduler job {name!r} interval is invalid")
         seen.add(name)
         jobs.append(
             {
                 "name": name,
-                "collector": collector,
+                "job_key": job_key,
                 "interval_minutes": interval,
                 "is_enabled": bool(raw.get("is_enabled", False)),
             }
@@ -63,17 +63,17 @@ def sync_jobs(database: Database, jobs: list[dict[str, Any]], globally_enabled: 
             cursor.execute(
                 """
                 INSERT INTO system.scheduler_jobs (
-                    job_name, collector_name, is_enabled, interval_minutes, next_run_at, updated_at
+                    job_name, job_key, is_enabled, interval_minutes, next_run_at, updated_at
                 ) VALUES (%s, %s, %s, %s, now(), now())
                 ON CONFLICT (job_name) DO UPDATE
-                SET collector_name = EXCLUDED.collector_name,
+                SET job_key = EXCLUDED.job_key,
                     is_enabled = EXCLUDED.is_enabled,
                     interval_minutes = EXCLUDED.interval_minutes,
                     updated_at = now()
                 """,
                 (
                     job["name"],
-                    job["collector"],
+                    job["job_key"],
                     globally_enabled and job["is_enabled"],
                     job["interval_minutes"],
                 ),
@@ -98,14 +98,14 @@ def claim_due_job(database: Database) -> tuple[str, str] | None:
                 updated_at = now()
             FROM candidate
             WHERE job.job_name = candidate.job_name
-            RETURNING job.job_name, job.collector_name
+            RETURNING job.job_name, job.job_key
             """
         )
         row = cursor.fetchone()
         return (row[0], row[1]) if row else None
 
 
-def mark_finished(database: Database, job_name: str, collector_name: str) -> None:
+def mark_finished(database: Database, job_name: str, job_key: str) -> None:
     with database.transaction() as connection, connection.cursor() as cursor:
         cursor.execute(
             """
@@ -119,7 +119,7 @@ def mark_finished(database: Database, job_name: str, collector_name: str) -> Non
                 updated_at = now()
             WHERE job_name = %s
             """,
-            (collector_name, job_name),
+            (job_key, job_name),
         )
 
 
@@ -148,37 +148,37 @@ def main() -> int:
             write_heartbeat(settings.data_directory)
             claimed = claim_due_job(database) if settings.scheduler_enabled else None
             if claimed:
-                job_name, collector_name = claimed
+                job_name, job_key = claimed
                 LOGGER.info(
-                    "scheduled collector starting",
-                    extra={"job": job_name, "collector": collector_name},
+                    "scheduled job starting",
+                    extra={"job": job_name, "job_key": job_key},
                 )
                 try:
-                    exit_code = run_collector(collector_name, "scheduled")
+                    exit_code = run_job(job_key, "scheduled")
                 except Exception as exc:
                     exit_code = 1
                     LOGGER.error(
-                        "scheduled collector could not initialize",
+                        "scheduled job could not initialize",
                         extra={
                             "job": job_name,
-                            "collector": collector_name,
+                            "job_key": job_key,
                             "error_type": type(exc).__name__,
                         },
                     )
                 try:
-                    mark_finished(database, job_name, collector_name)
+                    mark_finished(database, job_name, job_key)
                 except Exception as exc:
                     LOGGER.error(
                         "scheduler could not persist job completion",
                         extra={
                             "job": job_name,
-                            "collector": collector_name,
+                            "job_key": job_key,
                             "error_type": type(exc).__name__,
                         },
                     )
                 LOGGER.info(
-                    "scheduled collector finished",
-                    extra={"job": job_name, "collector": collector_name, "exit_code": exit_code},
+                    "scheduled job finished",
+                    extra={"job": job_name, "job_key": job_key, "exit_code": exit_code},
                 )
                 continue
             for _ in range(poll_seconds):

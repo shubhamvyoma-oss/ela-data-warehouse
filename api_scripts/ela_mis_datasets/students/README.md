@@ -32,7 +32,7 @@ A short or missing `customfield_data` list (or a non-dict entry at that index) i
 
 ## Storage and dedupe
 
-Rows are upserted into `bronze.students` via `CollectorRuntime.commit_rows(...)`, which uses the
+Rows are upserted into `bronze.students` via `JobRuntime.commit_rows(...)`, which uses the
 table's existing `UNIQUE (user_id)` constraint to do `ON CONFLICT (user_id) DO UPDATE SET
 <every other column>` -- i.e. the newest fetched row for a `user_id` always wins. This reproduces
 the original script's `merge_students()` dedupe-by-`user_id`, last-write-wins behavior, but as a
@@ -69,12 +69,12 @@ The checkpoint written on each page commit is:
 | `STUDENTS_PER_PAGE`   | `500`   | Job-specific page size, matching the original config's `students_per_page`. Falls back to the default on missing/invalid values. |
 
 Auth (`apikey`, `ORGID`) and `organization_id` come from `EdmingleSettings.from_environment()`,
-shared with every other collector in `api_scripts/`.
+shared with every other job in `api_scripts/`.
 
 ## Status (updated 2026-09-23)
 
-Registered in `api_scripts/runner.py`'s `collector_registry()` as `ela_mis_datasets.students`,
-with `TransformedTableRepository` wired into the `CollectorRuntime` `run_collector()`
+Registered in `api_scripts/runner.py`'s `job_registry()` as `ela_mis_datasets.students`,
+with `TransformedTableRepository` wired into the `JobRuntime` `run_job()`
 constructs. Runnable via `python warehouse_cli.py collect ela_mis_datasets.students`. It stays
 `is_enabled: false` in `services/scheduler/jobs.example.yaml` (as does every job in this repo)
 -- that flag, not registry wiring, is what gates it from running against the live Edmingle API.

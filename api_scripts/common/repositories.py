@@ -29,7 +29,7 @@ class RunRepository:
             cursor.execute(
                 """
                 INSERT INTO audit.events (run_id, component, event_type, status, details)
-                VALUES (%s, %s, 'collector_started', 'INFO', '{}'::jsonb)
+                VALUES (%s, %s, 'job_started', 'INFO', '{}'::jsonb)
                 """,
                 (run_id, pipeline_name),
             )
@@ -50,7 +50,7 @@ class RunRepository:
     ) -> None:
         database_status = "SUCCESS" if status == "succeeded" else "FAILED"
         event_status = database_status
-        event_type = "collector_finished" if status == "succeeded" else "collector_failed"
+        event_type = "job_finished" if status == "succeeded" else "job_failed"
         with self.database.transaction() as connection, connection.cursor() as cursor:
             cursor.execute(
                 """
@@ -64,7 +64,7 @@ class RunRepository:
                     metadata = metadata || jsonb_build_object('request_count', %s),
                     error_category = %s,
                     error_message = CASE WHEN %s IS NULL THEN NULL
-                                         ELSE 'collector failed; inspect protected application logs' END
+                                         ELSE 'job failed; inspect protected application logs' END
                 WHERE id = %s
                 """,
                 (
@@ -126,15 +126,15 @@ class CheckpointRepository:
     def __init__(self, database: Database) -> None:
         self.database = database
 
-    def get(self, collector_name: str, partition_key: str = "default") -> dict[str, Any]:
+    def get(self, job_name: str, partition_key: str = "default") -> dict[str, Any]:
         with self.database.transaction() as connection, connection.cursor() as cursor:
             cursor.execute(
                 """
                 SELECT checkpoint
                 FROM system.collection_checkpoints
-                WHERE collector_name = %s AND partition_key = %s
+                WHERE job_name = %s AND partition_key = %s
                 """,
-                (collector_name, partition_key),
+                (job_name, partition_key),
             )
             row = cursor.fetchone()
             return dict(row[0]) if row else {}
@@ -147,7 +147,7 @@ class BronzeRepository:
     def write_with_checkpoint(
         self,
         *,
-        collector_name: str,
+        job_name: str,
         run_id: uuid.UUID,
         records: list[RawRecord],
         checkpoint: dict[str, Any],
@@ -187,14 +187,14 @@ class BronzeRepository:
             cursor.execute(
                 """
                 INSERT INTO system.collection_checkpoints (
-                    collector_name, partition_key, checkpoint, updated_at, last_committed_run_id
+                    job_name, partition_key, checkpoint, updated_at, last_committed_run_id
                 ) VALUES (%s, %s, %s, now(), %s)
-                ON CONFLICT (collector_name, partition_key) DO UPDATE
+                ON CONFLICT (job_name, partition_key) DO UPDATE
                 SET checkpoint = EXCLUDED.checkpoint,
                     updated_at = now(),
                     last_committed_run_id = EXCLUDED.last_committed_run_id
                 """,
-                (collector_name, partition_key, Json(checkpoint), run_id),
+                (job_name, partition_key, Json(checkpoint), run_id),
             )
             cursor.execute(
                 """
@@ -204,7 +204,7 @@ class BronzeRepository:
                 """,
                 (
                     run_id,
-                    collector_name,
+                    job_name,
                     inserted,
                     Json({"partition_key": partition_key, "received_records": len(records)}),
                 ),
@@ -217,7 +217,7 @@ class TransformedTableRepository:
     own dedicated Bronze tables (e.g. bronze.course_catalog, bronze.students) --
     distinct from BronzeRepository, which only knows bronze.edmingle_api_records'
     raw-payload shape. Table and column names are always static strings chosen
-    by the calling collector, never derived from API response data, so building
+    by the calling job, never derived from API response data, so building
     SQL from them here is safe.
 
     This is a deliberate, explicit exception to "Bronze holds only raw
@@ -235,7 +235,7 @@ class TransformedTableRepository:
         columns: list[str],
         rows: list[tuple[Any, ...]],
         unique_columns: list[str],
-        collector_name: str,
+        job_name: str,
         run_id: uuid.UUID,
         checkpoint: dict[str, Any],
         partition_key: str = "default",
@@ -268,14 +268,14 @@ class TransformedTableRepository:
             cursor.execute(
                 """
                 INSERT INTO system.collection_checkpoints (
-                    collector_name, partition_key, checkpoint, updated_at, last_committed_run_id
+                    job_name, partition_key, checkpoint, updated_at, last_committed_run_id
                 ) VALUES (%s, %s, %s, now(), %s)
-                ON CONFLICT (collector_name, partition_key) DO UPDATE
+                ON CONFLICT (job_name, partition_key) DO UPDATE
                 SET checkpoint = EXCLUDED.checkpoint,
                     updated_at = now(),
                     last_committed_run_id = EXCLUDED.last_committed_run_id
                 """,
-                (collector_name, partition_key, Json(checkpoint), run_id),
+                (job_name, partition_key, Json(checkpoint), run_id),
             )
             cursor.execute(
                 """
@@ -285,7 +285,7 @@ class TransformedTableRepository:
                 """,
                 (
                     run_id,
-                    collector_name,
+                    job_name,
                     inserted,
                     Json({"partition_key": partition_key, "received_rows": len(rows), "table": table}),
                 ),

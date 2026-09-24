@@ -1,4 +1,4 @@
-# Course/batch merge collector
+# Course/batch merge job
 
 Ports the legacy standalone script `Course_Batch_Merge.py` (previously run by hand and
 written to a CSV) onto Postgres. It is a full-refresh job: every run re-fetches the whole
@@ -10,7 +10,7 @@ like the original script rewrote its CSV from scratch each run.
 1. Fetches the institute catalogue: `GET /institute/{institute_id}/courses/catalogue?institution_id={institute_id}`.
 2. Fetches **all batches across all three statuses** -- `0` (Active), `1` (Archived), and
    `3` (Completed) -- paginated via `GET /short/masterbatch?status={s}&page={n}&per_page=1000&organization_id={org_id}`.
-   Unlike `api_scripts/batches` (`MasterBatchCollector`), Archived is **not** skipped here:
+   Unlike `api_scripts/batches` (`MasterBatchJob`), Archived is **not** skipped here:
    the source script's business logic needs the full course/batch history to compute
    `Is_Latest_Batch` and `Final_Status` correctly.
 3. Filters out test batches (`batch_name` containing "test batch") and test/junk courses
@@ -21,7 +21,7 @@ like the original script rewrote its CSV from scratch each run.
 5. Adds one synthetic row per catalogue bundle that has no batch at all
    (`Has_Batch = 0`), so course-only catalogue entries are still represented.
 6. Writes the merged rows into `bronze.course_batch_merge` via
-   `CollectorRuntime.commit_rows()` (`TransformedTableRepository`), upserting on
+   `JobRuntime.commit_rows()` (`TransformedTableRepository`), upserting on
    `(batch_id, bundle_id)`.
 
 `EDMINGLE_INSTITUTE_ID` and the standard Edmingle org/API-key settings are required, same
@@ -31,9 +31,9 @@ as `catalogue/`.
 
 This job is **not** a reconciliation of `catalogue/` and `batches/` -- it is a separate,
 self-contained port of the original script's own extract+transform logic, and intentionally
-does not share row-level business rules with either of those collectors:
+does not share row-level business rules with either of those jobs:
 
-- It replaces the *role* that the old `batches/` (`MasterBatchCollector`) job used to play
+- It replaces the *role* that the old `batches/` (`MasterBatchJob`) job used to play
   for downstream batch reporting -- per project decision, batch/catalogue merge reporting
   now comes from this job's output table instead of the raw `bronze.edmingle_api_records`
   mirror that `batches/` writes.
@@ -50,19 +50,19 @@ does not share row-level business rules with either of those collectors:
 ## Known limitation inherited from the table schema
 
 `bronze.course_batch_merge` has a `UNIQUE (batch_id, bundle_id)` constraint, and this
-collector upserts on it via `ON CONFLICT`. Synthetic "catalogue-only, no batch" rows always
+job upserts on it via `ON CONFLICT`. Synthetic "catalogue-only, no batch" rows always
 have `batch_id = NULL`. Postgres never treats two `NULL`s as equal for uniqueness purposes,
 so those specific rows will **not** upsert across repeated full-refresh runs -- each run
 inserts a fresh row for every catalogue bundle that still has no batches, rather than
 updating the previous run's row in place. This is a property of the pre-existing table
-definition (which this change does not modify), not of the collector logic; flagging it
+definition (which this change does not modify), not of the job logic; flagging it
 here for whoever owns downstream Silver/Gold modeling of this table.
 
 ## Registry status (updated 2026-09-23)
 
-`pandas`/`numpy` are in `requirements.txt`, and this collector is registered in
-`api_scripts/runner.py::collector_registry()` as `courses_batches.course_batch_merge`, with
-`TransformedTableRepository` wired into `CollectorRuntime`. It is runnable via
+`pandas`/`numpy` are in `requirements.txt`, and this job is registered in
+`api_scripts/runner.py::job_registry()` as `courses_batches.course_batch_merge`, with
+`TransformedTableRepository` wired into `JobRuntime`. It is runnable via
 `python warehouse_cli.py collect courses_batches.course_batch_merge`. It stays
 `is_enabled: false` in `services/scheduler/jobs.example.yaml` (as does every job in this
 repo) -- that flag, not registry wiring, is what gates it from running against the live

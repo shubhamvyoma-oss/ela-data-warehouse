@@ -99,7 +99,7 @@ class DatabasePool:
                             return InsertResult(inserted=False, duplicate=True, webhook_event_id=None)
 
                     # A live webhook event has no natural "run" boundary the way a
-                    # scheduled collector pull does -- it's one atomic unit of
+                    # scheduled job pull does -- it's one atomic unit of
                     # work, known-complete the moment this transaction commits.
                     # So the pipeline_run row is written already-SUCCESS/finished,
                     # in the same transaction as the Bronze row it accounts for,

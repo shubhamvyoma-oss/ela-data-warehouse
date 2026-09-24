@@ -30,4 +30,4 @@ Required environment variables (no credential values are hardcoded):
 
 This job authenticates with a username and password, unlike the other API-key-based jobs in this repo, and must only ever be run deliberately by an operator who intends to rotate the key -- never as part of routine/automatic pipeline runs, CI, or tests.
 
-`generate.py` can be run directly (`python3 -m api_scripts.edmingle_api_key_generator.generate`), which calls `generate_and_deliver_api_key()`. Wiring a dedicated subcommand into `warehouse_cli.py` is a follow-up left for a separate change. It is not registered in `api_scripts.runner.collector_registry()` -- it isn't a Bronze-writing data collector, it's a standalone credential-rotation utility.
+`generate.py` can be run directly (`python3 -m api_scripts.edmingle_api_key_generator.generate`), which calls `generate_and_deliver_api_key()`. Wiring a dedicated subcommand into `warehouse_cli.py` is a follow-up left for a separate change. It is not registered in `api_scripts.runner.job_registry()` -- it isn't a Bronze-writing data job, it's a standalone credential-rotation utility.

@@ -7,24 +7,24 @@ Folders are grouped by the legacy script folder each job was ported from (see
 `documentation/API_JOBS.md` for the full picture and each subfolder's own README for
 endpoint/config/table detail):
 
-| Folder | Registered collector name(s) | Bronze table(s) |
+| Folder | Registered job name(s) | Bronze table(s) |
 | --- | --- | --- |
 | `attendance/` | `attendance` | `bronze.report55_batch_attendance_summary`, `bronze.report55_session_attendance` |
 | `attendance_data/` | `attendance_data.catalogue`, `attendance_data.class_id_lookup`, `attendance_data.class_session_attendance` | `bronze.course_catalog`, `bronze.class_id_lookup`, `bronze.class_session_attendance` |
 | `courses_batches/` | `courses_batches.course_batch_merge`, `courses_batches.course_catalogue_raw` | `bronze.course_batch_merge`, `bronze.course_catalogue_raw` |
 | `ela_mis_datasets/` | `ela_mis_datasets.students`, `ela_mis_datasets.course_enrollments` | `bronze.students`, `bronze.course_enrollments` |
 | `enrollments_reports/` | `enrollment_reports` | `bronze.enrollment_reports` |
-| `api_key_manager/` | not a collector -- `ApiKeyLifecycle` used by every run | `system.api_credentials` (metadata only, never the key value) |
-| `edmingle_api_key_generator/` | not a collector -- manual-only `generate.py`, never scheduled | `system.api_credentials` (metadata only) |
+| `api_key_manager/` | not a job -- `ApiKeyLifecycle` used by every run | `system.api_credentials` (metadata only, never the key value) |
+| `edmingle_api_key_generator/` | not a job -- manual-only `generate.py`, never scheduled | `system.api_credentials` (metadata only) |
 
-Run any registered collector with:
+Run any registered job with:
 
 ```bash
 python warehouse_cli.py collect <name>
 ```
 
 e.g. `python warehouse_cli.py collect attendance_data.catalogue`. The full registry lives in
-`api_scripts/runner.py::collector_registry()` -- that function, not this README, is the source
+`api_scripts/runner.py::job_registry()` -- that function, not this README, is the source
 of truth for exact names if the two ever disagree.
 
 The folders `sessions/`, `teachers/`, and `transactions/` are intentionally reserved. Their

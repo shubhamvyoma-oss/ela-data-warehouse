@@ -7,7 +7,7 @@ from typing import Any
 from api_scripts.common.api_client import ApiContractError
 from api_scripts.common.edmingle import has_more_pages, require_record_list
 from api_scripts.common.repositories import utc_iso
-from api_scripts.common.runtime import CollectorRuntime
+from api_scripts.common.runtime import JobRuntime
 
 # Same DD-MM-YYYY format the original edmingle_constants.DATE_FMT used --
 # this is the format Edmingle's /reports/enrollment endpoint expects for
@@ -71,7 +71,7 @@ def build_chunks(start_date: str, end_date: str, chunk_days: int) -> list[tuple[
     HTTP mechanics, so it is kept as its own explicit function rather than
     folded into the shared common/ API-client infra. The only change from the
     original is raising ValueError instead of calling sys.exit(), since this
-    runs inside a collector rather than as a standalone CLI script.
+    runs inside a job rather than as a standalone CLI script.
     """
     start = datetime.strptime(start_date, DATE_FMT)
     end = datetime.strptime(end_date, DATE_FMT)
@@ -122,7 +122,7 @@ def _load_window() -> tuple[str, str, int, int]:
     return start_date, end_date, chunk_days, per_page
 
 
-class EnrollmentReportsCollector:
+class EnrollmentReportsJob:
     """Ports edmingle_export.py / edmingle_api.py / edmingle_chunker.py --
     GET /reports/enrollment (report_details_type=3), a row-level enrollment
     extract pulled in <=chunk_days date windows because Edmingle rejects
@@ -146,7 +146,7 @@ class EnrollmentReportsCollector:
     name = "enrollment_reports"
     checkpoint_partition_key = "default"
 
-    def run(self, runtime: CollectorRuntime, checkpoint: dict[str, Any]) -> None:
+    def run(self, runtime: JobRuntime, checkpoint: dict[str, Any]) -> None:
         start_date, end_date, chunk_days, per_page = _load_window()
         chunks = build_chunks(start_date, end_date, chunk_days)
 

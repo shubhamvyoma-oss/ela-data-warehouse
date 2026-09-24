@@ -8,13 +8,13 @@ import pandas as pd
 from api_scripts.common.api_client import ApiContractError
 from api_scripts.common.edmingle import require_record_list
 from api_scripts.common.repositories import utc_iso
-from api_scripts.common.runtime import CollectorRuntime
+from api_scripts.common.runtime import JobRuntime
 
 # ═══════════════════════════════════════════════════════════════════
-# This collector is a line-for-line port of the legacy standalone script
+# This job is a line-for-line port of the legacy standalone script
 # `build_course_catalog.py` (the PRIMARY catalogue builder -- there is a
 # non-primary backup, `build_course_catalog_alt.py`, which this does NOT
-# port) onto Postgres via CollectorRuntime.commit_rows(). Only the output
+# port) onto Postgres via JobRuntime.commit_rows(). Only the output
 # sink changed -- CSV became bronze.course_catalog -- every extract/filter/
 # derive rule below is preserved exactly, including the quirks noted
 # inline. Do not "fix" or simplify the business logic here without
@@ -57,7 +57,7 @@ _BATCH_ONLY_COLUMNS = [
 ]
 
 
-class CourseCatalogueCollector:
+class CourseCatalogueJob:
     """Ported from build_course_catalog.py (the primary Stage-1 catalogue
     builder). Full-refresh: fetches the whole catalogue + Active/Completed
     batches every run and writes the merged result straight into
@@ -68,7 +68,7 @@ class CourseCatalogueCollector:
     name = "attendance_data.catalogue"
     checkpoint_partition_key = "default"
 
-    def run(self, runtime: CollectorRuntime, checkpoint: dict[str, Any]) -> None:
+    def run(self, runtime: JobRuntime, checkpoint: dict[str, Any]) -> None:
         institute_id = runtime.client.settings.institute_id
         if not institute_id:
             raise ValueError("EDMINGLE_INSTITUTE_ID is required for catalogue")
@@ -116,7 +116,7 @@ class CourseCatalogueCollector:
 
 
 # ── Fetch: catalogue ─────────────────────────────────────────────────
-def _fetch_catalogue(runtime: CollectorRuntime, institute_id: str) -> pd.DataFrame:
+def _fetch_catalogue(runtime: JobRuntime, institute_id: str) -> pd.DataFrame:
     payload = runtime.client.get_json(
         f"/institute/{institute_id}/courses/catalogue",
         params={"institution_id": institute_id},
@@ -130,7 +130,7 @@ def _fetch_catalogue(runtime: CollectorRuntime, institute_id: str) -> pd.DataFra
 
 
 # ── Fetch: batches (Active + Completed only, paginated) ─────────────
-def _fetch_batches(runtime: CollectorRuntime, organization_id: str) -> pd.DataFrame:
+def _fetch_batches(runtime: JobRuntime, organization_id: str) -> pd.DataFrame:
     all_rows: list[dict[str, Any]] = []
 
     for status_code, status_label in _BATCH_STATUSES.items():

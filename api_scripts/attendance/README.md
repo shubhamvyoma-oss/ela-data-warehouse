@@ -1,4 +1,4 @@
-# Attendance collector
+# Attendance job
 
 Ports both halves of the standalone production script `attendance.py` (v1.2.0, "Production-grade
 Edmingle report_type=55 attendance pipeline"): the daily fetch loop, and the pandas summary layer
@@ -7,12 +7,12 @@ tables instead of CSV files.
 
 ## What changed vs. the previous raw-ingestion version of this job
 
-The previous `AttendanceCollector` fetched `report_type=55` one IST calendar day at a time and
+The previous `AttendanceJob` fetched `report_type=55` one IST calendar day at a time and
 wrote each row, untransformed, into `bronze.edmingle_api_records` via `runtime.commit(...)`. This
 version keeps the exact same per-day fetch (`GET /report/csv`, `report_type=55`,
 `organization_id`, `start_time`/`end_time` as day-boundary epoch seconds, `response_type=1`), but
 adds the original script's business logic on top and writes into two purpose-built tables via
-`CollectorRuntime.commit_rows(...)`:
+`JobRuntime.commit_rows(...)`:
 
 - **`bronze.report55_session_attendance`** -- one row per `(batch_Id, session)`: attendance counts
   and conducted/planned status for that specific class session.
@@ -22,7 +22,7 @@ adds the original script's business logic on top and writes into two purpose-bui
 All retry/backoff/circuit-breaker/network-outage-detection logic from the original script is
 **not** reimplemented here -- it already lives in `api_scripts.common.api_client.EdmingleApiClient
 .get_json()` (per-request retry with exponential backoff + jitter, `Retry-After` handling for 429,
-fatal-vs-retriable HTTP status codes) and is shared by every collector in this project. This file
+fatal-vs-retriable HTTP status codes) and is shared by every job in this project. This file
 only adds the pandas transform layer.
 
 ## Fetch
@@ -135,7 +135,7 @@ session_attendance_percentage, received_at, created_at
 
 ## Storage
 
-Both tables are written via `CollectorRuntime.commit_rows(...)` (`TransformedTableRepository`),
+Both tables are written via `JobRuntime.commit_rows(...)` (`TransformedTableRepository`),
 the same mechanism the `students`, `course_enrollments`, and `course_batch_merge` jobs use for
 their own dedicated Bronze tables.
 
@@ -157,7 +157,7 @@ The checkpoint written after every commit is:
 ```
 This is informational only (see "Deviation" above) -- it is not read back to compute the next
 run's start date. `checkpoint_partition_key` remains `"daily"`, unchanged from the previous
-version of this collector.
+version of this job.
 
 ## Configuration (env vars)
 
@@ -174,12 +174,12 @@ version of this collector.
 | `ATTENDANCE_TREAT_ZERO_RATING_AS_MISSING` | `true` | Treats `studentRating == 0` as missing rather than a real zero rating before averaging. |
 
 Auth (`apikey`, `ORGID`) and `organization_id` come from `EdmingleSettings.from_environment()`,
-shared with every other collector in `api_scripts/`.
+shared with every other job in `api_scripts/`.
 
 ## Registry status (updated 2026-09-23)
 
-`AttendanceCollector` is registered in `api_scripts/runner.py`'s `collector_registry()` as
-`attendance`, and `run_collector()` constructs `CollectorRuntime` with
+`AttendanceJob` is registered in `api_scripts/runner.py`'s `job_registry()` as
+`attendance`, and `run_job()` constructs `JobRuntime` with
 `transformed=TransformedTableRepository(database)` wired in, so `commit_rows(...)` works end to
 end. It is runnable via `python warehouse_cli.py collect attendance`. It stays
 `is_enabled: false` in `services/scheduler/jobs.example.yaml` (as does every job in this repo) --
@@ -187,5 +187,5 @@ that flag, not registry wiring, is what gates it from running against the live E
 
 ## Dependencies
 
-This collector needs `pandas` and `numpy`, matching the other pandas-based ported jobs
+This job needs `pandas` and `numpy`, matching the other pandas-based ported jobs
 (`course_batch_merge`, `course_catalogue_raw`). Both are listed in `requirements.txt`.

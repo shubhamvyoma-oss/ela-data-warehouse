@@ -1,1 +1,1 @@
-"""Date-windowed Edmingle attendance collector."""
+"""Date-windowed Edmingle attendance job."""

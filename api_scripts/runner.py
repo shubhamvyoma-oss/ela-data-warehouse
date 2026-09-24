@@ -12,7 +12,7 @@ from api_scripts.common.repositories import (
     RunRepository,
     TransformedTableRepository,
 )
-from api_scripts.common.runtime import CollectorRuntime
+from api_scripts.common.runtime import JobRuntime
 from shared.config import DatabaseSettings, EdmingleSettings, WarehouseSettings
 from shared.database import Database
 from shared.logging import configure_logging
@@ -20,40 +20,40 @@ from shared.logging import configure_logging
 LOGGER = logging.getLogger("warehouse.runner")
 
 
-def collector_registry():
-    from api_scripts.attendance.attendance import AttendanceCollector
-    from api_scripts.attendance_data.catalogue.course_catalogue import CourseCatalogueCollector
-    from api_scripts.attendance_data.class_id_lookup.class_id_lookup import ClassIdLookupCollector
+def job_registry():
+    from api_scripts.attendance.attendance import AttendanceJob
+    from api_scripts.attendance_data.catalogue.course_catalogue import CourseCatalogueJob
+    from api_scripts.attendance_data.class_id_lookup.class_id_lookup import ClassIdLookupJob
     from api_scripts.attendance_data.class_session_attendance.class_session_attendance import (
-        ClassSessionAttendanceCollector,
+        ClassSessionAttendanceJob,
     )
-    from api_scripts.courses_batches.course_batch_merge.course_batch_merge import CourseBatchMergeCollector
+    from api_scripts.courses_batches.course_batch_merge.course_batch_merge import CourseBatchMergeJob
     from api_scripts.courses_batches.course_catalogue_raw.course_catalogue_raw import (
-        CourseCatalogueRawCollector,
+        CourseCatalogueRawJob,
     )
     from api_scripts.ela_mis_datasets.course_enrollments.course_enrollments import (
-        CourseEnrollmentsCollector,
+        CourseEnrollmentsJob,
     )
-    from api_scripts.ela_mis_datasets.students.students import StudentsCollector
-    from api_scripts.enrollments_reports.enrollments_reports import EnrollmentReportsCollector
+    from api_scripts.ela_mis_datasets.students.students import StudentsJob
+    from api_scripts.enrollments_reports.enrollments_reports import EnrollmentReportsJob
 
     return {
-        "attendance": AttendanceCollector,
-        "attendance_data.catalogue": CourseCatalogueCollector,
-        "attendance_data.class_id_lookup": ClassIdLookupCollector,
-        "attendance_data.class_session_attendance": ClassSessionAttendanceCollector,
-        "courses_batches.course_batch_merge": CourseBatchMergeCollector,
-        "courses_batches.course_catalogue_raw": CourseCatalogueRawCollector,
-        "ela_mis_datasets.students": StudentsCollector,
-        "ela_mis_datasets.course_enrollments": CourseEnrollmentsCollector,
-        "enrollment_reports": EnrollmentReportsCollector,
+        "attendance": AttendanceJob,
+        "attendance_data.catalogue": CourseCatalogueJob,
+        "attendance_data.class_id_lookup": ClassIdLookupJob,
+        "attendance_data.class_session_attendance": ClassSessionAttendanceJob,
+        "courses_batches.course_batch_merge": CourseBatchMergeJob,
+        "courses_batches.course_catalogue_raw": CourseCatalogueRawJob,
+        "ela_mis_datasets.students": StudentsJob,
+        "ela_mis_datasets.course_enrollments": CourseEnrollmentsJob,
+        "enrollment_reports": EnrollmentReportsJob,
     }
 
 
-def run_collector(name: str, run_type: str = "manual") -> int:
-    registry = collector_registry()
+def run_job(name: str, run_type: str = "manual") -> int:
+    registry = job_registry()
     if name not in registry:
-        raise ValueError(f"unknown collector {name!r}; choose from {', '.join(sorted(registry))}")
+        raise ValueError(f"unknown job {name!r}; choose from {', '.join(sorted(registry))}")
 
     warehouse_settings = WarehouseSettings.from_environment()
     configure_logging(warehouse_settings.log_level)
@@ -63,8 +63,8 @@ def run_collector(name: str, run_type: str = "manual") -> int:
         environment=warehouse_settings.environment
     )
     client = EdmingleApiClient(edmingle_settings)
-    collector = registry[name]()
-    database = Database(DatabaseSettings.from_environment(), f"ela-collector-{name}")
+    job = registry[name]()
+    database = Database(DatabaseSettings.from_environment(), f"ela-job-{name}")
     checkpoints = CheckpointRepository(database)
     runs = RunRepository(database)
     try:
@@ -72,18 +72,18 @@ def run_collector(name: str, run_type: str = "manual") -> int:
             expires_at=lifecycle.expires_at,
             status=lifecycle.status(),
         )
-        checkpoint_partition_key = collector.checkpoint_partition_key
+        checkpoint_partition_key = job.checkpoint_partition_key
         checkpoint_before = checkpoints.get(name, checkpoint_partition_key)
         run_id = runs.start(name, run_type, checkpoint_before)
-        runtime = CollectorRuntime(
-            collector_name=name,
+        runtime = JobRuntime(
+            job_name=name,
             run_id=run_id,
             client=client,
             bronze=BronzeRepository(database),
             transformed=TransformedTableRepository(database),
         )
         try:
-            collector.run(runtime, checkpoint_before)
+            job.run(runtime, checkpoint_before)
             runtime.stats.request_count = client.request_count
             runs.finish(
                 run_id,
@@ -96,9 +96,9 @@ def run_collector(name: str, run_type: str = "manual") -> int:
                 request_count=client.request_count,
             )
             LOGGER.info(
-                "collector succeeded",
+                "job succeeded",
                 extra={
-                    "collector": name,
+                    "job": name,
                     "run_id": str(run_id),
                     "rows_read": runtime.stats.rows_read,
                     "rows_written": runtime.stats.rows_written,
@@ -119,9 +119,9 @@ def run_collector(name: str, run_type: str = "manual") -> int:
                 error_category=type(exc).__name__,
             )
             LOGGER.error(
-                "collector failed",
+                "job failed",
                 extra={
-                    "collector": name,
+                    "job": name,
                     "run_id": str(run_id),
                     "error_type": type(exc).__name__,
                 },
@@ -132,15 +132,15 @@ def run_collector(name: str, run_type: str = "manual") -> int:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Run a dedicated ELA API collector")
-    parser.add_argument("collector", choices=sorted(collector_registry()))
+    parser = argparse.ArgumentParser(description="Run a dedicated ELA API job")
+    parser.add_argument("job", choices=sorted(job_registry()))
     parser.add_argument("--run-type", default="manual", choices=("manual", "scheduled", "replay"))
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
-    return run_collector(args.collector, args.run_type)
+    return run_job(args.job, args.run_type)
 
 
 if __name__ == "__main__":

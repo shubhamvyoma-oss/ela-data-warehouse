@@ -19,7 +19,7 @@ class ApiRequestError(RuntimeError):
 
 
 class ApiContractError(RuntimeError):
-    """The API response did not match the confirmed collector contract."""
+    """The API response did not match the confirmed job contract."""
 
 
 class EdmingleApiClient:

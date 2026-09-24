@@ -40,7 +40,7 @@ Optional:
 `build_chunks(start_date, end_date, chunk_days)` in `enrollments_reports.py` splits that inclusive
 range into windows of at most `chunk_days` days each -- ported near-verbatim from the
 original `edmingle_chunker.build_chunks` (the only change: raising `ValueError` instead
-of calling `sys.exit()`, since this runs inside a collector rather than a standalone CLI
+of calling `sys.exit()`, since this runs inside a job rather than a standalone CLI
 script).
 
 Per this project's decision, this chunking logic stays local to this job rather than
@@ -90,14 +90,14 @@ byte-offset-precision resume.
 
 - No email alerting (startup checks, failure/status emails) is ported -- that belongs
   to the shared runner/observability layer (`audit.pipeline_runs`, `audit.events`), not
-  to an individual collector.
+  to an individual job.
 - No standalone `.chunks.json` plan file -- `build_chunks()` is cheap to recompute, so
   it is simply called again on every run rather than persisted and reloaded.
 
 ## Status (updated 2026-09-23)
 
-Registered in `api_scripts/runner.py`'s `collector_registry()` as `enrollment_reports`, with
-`TransformedTableRepository` wired into the `CollectorRuntime` the runner constructs. Runnable
+Registered in `api_scripts/runner.py`'s `job_registry()` as `enrollment_reports`, with
+`TransformedTableRepository` wired into the `JobRuntime` the runner constructs. Runnable
 via `python warehouse_cli.py collect enrollment_reports`. It stays `is_enabled: false` in
 `services/scheduler/jobs.example.yaml` (as does every job in this repo) -- that flag, not
 registry wiring, is what gates it from running against the live Edmingle API and spending real

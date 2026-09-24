@@ -8,18 +8,18 @@ import pandas as pd
 from api_scripts.common.api_client import ApiContractError
 from api_scripts.common.edmingle import require_record_list
 from api_scripts.common.repositories import utc_iso
-from api_scripts.common.runtime import CollectorRuntime
+from api_scripts.common.runtime import JobRuntime
 
 # ═══════════════════════════════════════════════════════════════════
-# This collector is a line-for-line port of the legacy standalone script
+# This job is a line-for-line port of the legacy standalone script
 # `Course_Batch_Merge.py` (CSV output) onto Postgres via
-# CollectorRuntime.commit_rows(). Only the output sink changed -- every
+# JobRuntime.commit_rows(). Only the output sink changed -- every
 # extract/filter/derive rule below is preserved exactly, including the
 # quirks noted inline. Do not "fix" or simplify the business logic here
 # without checking the original script first.
 # ═══════════════════════════════════════════════════════════════════
 
-# Unlike api_scripts/batches (MasterBatchCollector), which is a raw paginated
+# Unlike api_scripts/batches (MasterBatchJob), which is a raw paginated
 # mirror of the API, this job fetches ALL THREE statuses -- including
 # Archived -- because the source script's Master Build process needs the
 # full course/batch universe to compute Is_Latest_Batch and Final_Status
@@ -28,7 +28,7 @@ _BATCH_STATUSES: dict[int, str] = {0: "Active", 1: "Archived", 3: "Completed"}
 
 # The original script hardcodes per_page=1000 (not the configurable
 # EDMINGLE_BATCHES_PER_PAGE / settings.batches_per_page used by the sibling
-# `batches` collector). Preserved as-is.
+# `batches` job). Preserved as-is.
 _BATCHES_PER_PAGE = 1000
 
 _TEST_COURSE_KEYWORDS = ["test", "demo", "dummy", "sample", "cbt_test", "payment_test", "smoke"]
@@ -47,7 +47,7 @@ _BATCH_ONLY_COLUMNS = [
 ]
 
 
-class CourseBatchMergeCollector:
+class CourseBatchMergeJob:
     """Ported from Course_Batch_Merge.py. Full-refresh: fetches the whole
     catalogue + all batches every run and writes the merged result straight
     into bronze.course_batch_merge (a dedicated, already-transformed Bronze
@@ -57,7 +57,7 @@ class CourseBatchMergeCollector:
     name = "courses_batches.course_batch_merge"
     checkpoint_partition_key = "default"
 
-    def run(self, runtime: CollectorRuntime, checkpoint: dict[str, Any]) -> None:
+    def run(self, runtime: JobRuntime, checkpoint: dict[str, Any]) -> None:
         institute_id = runtime.client.settings.institute_id
         if not institute_id:
             raise ValueError("EDMINGLE_INSTITUTE_ID is required for course_batch_merge")
@@ -108,7 +108,7 @@ class CourseBatchMergeCollector:
 
 
 # ── Fetch: catalogue ─────────────────────────────────────────────────
-def _fetch_catalogue(runtime: CollectorRuntime, institute_id: str) -> pd.DataFrame:
+def _fetch_catalogue(runtime: JobRuntime, institute_id: str) -> pd.DataFrame:
     payload = runtime.client.get_json(
         f"/institute/{institute_id}/courses/catalogue",
         params={"institution_id": institute_id},
@@ -122,7 +122,7 @@ def _fetch_catalogue(runtime: CollectorRuntime, institute_id: str) -> pd.DataFra
 
 
 # ── Fetch: batches (all three statuses, paginated) ──────────────────
-def _fetch_batches(runtime: CollectorRuntime, organization_id: str) -> pd.DataFrame:
+def _fetch_batches(runtime: JobRuntime, organization_id: str) -> pd.DataFrame:
     all_rows: list[dict[str, Any]] = []
 
     for status_code, status_label in _BATCH_STATUSES.items():

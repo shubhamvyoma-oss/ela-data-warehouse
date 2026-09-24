@@ -1,1 +1,1 @@
-"""Edmingle course/batch merge collector (ported from the legacy Course_Batch_Merge.py script)."""
+"""Edmingle course/batch merge job (ported from the legacy Course_Batch_Merge.py script)."""

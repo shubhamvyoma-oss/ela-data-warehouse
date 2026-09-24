@@ -8,10 +8,10 @@ import pandas as pd
 from psycopg2.extras import Json
 
 from api_scripts.common.repositories import utc_iso
-from api_scripts.common.runtime import CollectorRuntime
+from api_scripts.common.runtime import JobRuntime
 
 
-class CourseCatalogueRawCollector:
+class CourseCatalogueRawJob:
     """Ported unchanged from corses-batches/course_catalogue_data (1).py: a single,
     unretried GET against the institute catalogue endpoint, then a generic
     recursive-list-finder + pandas.json_normalize flatten producing dynamic,
@@ -22,7 +22,7 @@ class CourseCatalogueRawCollector:
     name = "courses_batches.course_catalogue_raw"
     checkpoint_partition_key = "default"
 
-    def run(self, runtime: CollectorRuntime, checkpoint: dict[str, Any]) -> None:
+    def run(self, runtime: JobRuntime, checkpoint: dict[str, Any]) -> None:
         institute_id = runtime.client.settings.institute_id
         if not institute_id:
             raise ValueError("EDMINGLE_INSTITUTE_ID is required for course_catalogue_raw")

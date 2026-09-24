@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from api_scripts.runner import collector_registry
+from api_scripts.runner import job_registry
 
 
 def _load_schedule():
@@ -21,21 +21,21 @@ def _load_schedule():
 def test_example_schedule_only_uses_registered_api_scripts() -> None:
     _, jobs = _load_schedule()(Path("services/scheduler/jobs.example.yaml"))
 
-    assert {job["collector"] for job in jobs} <= set(collector_registry())
+    assert {job["job_key"] for job in jobs} <= set(job_registry())
     assert all(job["is_enabled"] is False for job in jobs)
 
 
-def test_schedule_rejects_unknown_collector(tmp_path: Path) -> None:
+def test_schedule_rejects_unknown_job(tmp_path: Path) -> None:
     path = tmp_path / "jobs.yaml"
     path.write_text(
         "poll_seconds: 30\n"
         "jobs:\n"
         "  - name: bad\n"
-        "    collector: imagined\n"
+        "    job_key: imagined\n"
         "    is_enabled: true\n"
         "    interval_minutes: 5\n",
         encoding="utf-8",
     )
 
-    with pytest.raises(ValueError, match="unknown collector"):
+    with pytest.raises(ValueError, match="unknown job"):
         _load_schedule()(path)

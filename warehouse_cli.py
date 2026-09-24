@@ -4,7 +4,7 @@ import argparse
 import json
 from pathlib import Path
 
-from api_scripts.runner import collector_registry, run_collector
+from api_scripts.runner import job_registry, run_job
 from database.migrate import apply_migrations
 from manual_imports.import_file import import_file
 from processing.silver.runner import run_transform, transform_registry
@@ -23,8 +23,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     commands.add_parser("migrate", help="apply ordered database migrations")
 
-    collect = commands.add_parser("collect", help="run one dedicated API collector")
-    collect.add_argument("collector", choices=sorted(collector_registry()))
+    collect = commands.add_parser("collect", help="run one dedicated API job")
+    collect.add_argument("job", choices=sorted(job_registry()))
     collect.add_argument("--run-type", default="manual", choices=("manual", "scheduled", "replay"))
 
     transform = commands.add_parser("transform", help="run one Silver-layer transform")
@@ -55,7 +55,7 @@ def main() -> int:
         return 0
 
     if args.command == "collect":
-        return run_collector(args.collector, args.run_type)
+        return run_job(args.job, args.run_type)
 
     if args.command == "transform":
         return run_transform(args.transform, args.run_type)

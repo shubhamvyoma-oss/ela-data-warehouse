@@ -44,7 +44,7 @@ inserts live leaves both NULL.
 Every row also requires a `pipeline_run_id`, linking it to an `audit.pipeline_runs` entry --
 `app/database/pool.py` creates one per webhook event (`run_type='streaming'`, already
 `SUCCESS`/finished in the same transaction as the Bronze insert, since a single webhook
-insert has no meaningful "in-progress" state the way a multi-step collector run does).
+insert has no meaningful "in-progress" state the way a multi-step job run does).
 
 Rules (carried forward from before the redirect, still true, just naming the current table):
 

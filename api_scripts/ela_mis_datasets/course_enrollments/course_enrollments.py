@@ -4,7 +4,7 @@ from typing import Any
 
 from api_scripts.common.edmingle import require_record_list
 from api_scripts.common.repositories import utc_iso
-from api_scripts.common.runtime import CollectorRuntime
+from api_scripts.common.runtime import JobRuntime
 from shared.config import DatabaseSettings
 from shared.database import Database
 
@@ -96,7 +96,7 @@ def _build_row(user_id: str, course: dict[str, Any]) -> tuple[Any, ...] | None:
     )
 
 
-class CourseEnrollmentsCollector:
+class CourseEnrollmentsJob:
     """Ports the course/enrollment half of the legacy
     edmingle_student_course_sync.py script (the student-roster half is ported
     separately as the `students` job). One GET /admin/classes/attendance call
@@ -113,7 +113,7 @@ class CourseEnrollmentsCollector:
     name = "ela_mis_datasets.course_enrollments"
     checkpoint_partition_key = "default"
 
-    def run(self, runtime: CollectorRuntime, checkpoint: dict[str, Any]) -> None:
+    def run(self, runtime: JobRuntime, checkpoint: dict[str, Any]) -> None:
         user_ids = self._load_eligible_user_ids()
 
         already_processed = int(checkpoint.get("students_processed", 0))
@@ -162,7 +162,7 @@ class CourseEnrollmentsCollector:
                 pending_rows = []
 
     def _load_eligible_user_ids(self) -> list[str]:
-        # CollectorRuntime has no generic query method, so this job opens its
+        # JobRuntime has no generic query method, so this job opens its
         # own short-lived read connection just to look up eligible user_ids
         # from bronze.students -- separate from the runtime's own write path.
         database = Database(DatabaseSettings.from_environment(), "course_enrollments-lookup")

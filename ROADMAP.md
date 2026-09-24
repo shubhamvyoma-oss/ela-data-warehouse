@@ -99,10 +99,10 @@ These were policy statements, not code:
   (email/Slack/Teams) and failure paths to wire it into.
 - **Configuration**: policy already effectively is "runtime parsing lives in
   `shared/config/`, secrets never go in PostgreSQL config values" — followed
-  today by every collector/transform. No separate policy folder needed.
+  today by every job/transform. No separate policy folder needed.
 - **Logging**: policy is "structured setup lives in `shared/logging/`" —
   already followed. No separate policy folder needed.
-- **Monitoring**: health/collector/database status already has a real
+- **Monitoring**: health/job/database status already has a real
   `monitoring` schema (see `database/migrations/003_naming_and_platform_schemas.sql`).
   An independently deployable monitoring *service* reading that schema is
   still unbuilt (see Services below).

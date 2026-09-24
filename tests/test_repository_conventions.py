@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from api_scripts.runner import collector_registry
+from api_scripts.runner import job_registry
 
 
 def test_repository_uses_frozen_component_layout() -> None:
@@ -33,7 +33,7 @@ def test_repository_uses_frozen_component_layout() -> None:
     }
 
     assert all(Path(path).exists() for path in required)
-    assert not Path("collectors").exists()
+    assert not Path("jobs").exists()
     assert not Path("platform/scheduler").exists()
 
     # These flat, single-job folder names must NOT exist anymore -- they
@@ -64,8 +64,8 @@ def test_repository_uses_frozen_component_layout() -> None:
     assert not any(Path(path).exists() for path in removed)
 
 
-def test_collector_registry_uses_confirmed_names() -> None:
-    assert set(collector_registry()) == {
+def test_job_registry_uses_confirmed_names() -> None:
+    assert set(job_registry()) == {
         "attendance",
         "attendance_data.catalogue",
         "attendance_data.class_id_lookup",

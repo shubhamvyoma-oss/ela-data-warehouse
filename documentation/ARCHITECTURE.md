@@ -18,7 +18,7 @@ Ingestion does not apply business transformations.
 | --- | --- |
 | `system` | Configuration, registries, checkpoints, schedules, locks, and non-secret credential metadata |
 | `audit` | Immutable pipeline, event, and manual-import history |
-| `monitoring` | Current service, collector, and database health state |
+| `monitoring` | Current service, job, and database health state |
 | `bronze` | Immutable API payloads and manual-import rows |
 | `silver` | Typed, deduplicated, standardized business entities after approved contracts exist |
 | `gold` | Approved facts, dimensions, KPIs, and reporting models |

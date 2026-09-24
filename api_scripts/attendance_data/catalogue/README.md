@@ -1,4 +1,4 @@
-# Course catalogue collector
+# Course catalogue job
 
 Ports the legacy standalone script `build_course_catalog.py` -- the **primary** Stage-1
 catalogue builder in the source project (there is a non-primary backup,
@@ -7,7 +7,7 @@ full-refresh job: every run re-fetches the whole catalogue and the Active/Comple
 batches and rewrites `bronze.course_catalog` from scratch, exactly like the original
 script rewrote its CSV from scratch each run.
 
-This replaces the previous, much simpler version of this collector, which only mirrored
+This replaces the previous, much simpler version of this job, which only mirrored
 the raw catalogue endpoint into `bronze.edmingle_api_records` with no batch merge or
 business logic at all.
 
@@ -36,7 +36,7 @@ business logic at all.
    `Is_Latest_Batch = 1`, `bundle_enrollment_count = 0`, `Catalogue_Match = 1`), so
    course-only catalogue entries are still represented.
 7. Converts `start_date` / `end_date` from Unix epoch seconds to dates.
-8. Writes the merged rows into `bronze.course_catalog` via `CollectorRuntime.commit_rows()`
+8. Writes the merged rows into `bronze.course_catalog` via `JobRuntime.commit_rows()`
    (`TransformedTableRepository`), upserting on `(batch_id, bundle_id)`.
 
 `EDMINGLE_INSTITUTE_ID` and the standard Edmingle org/API-key settings are required, same
@@ -59,21 +59,21 @@ different source scripts and intentionally diverge:
 
 ## Known limitation: synthetic no-batch rows won't upsert cleanly
 
-`bronze.course_catalog` has a `UNIQUE (batch_id, bundle_id)` constraint, and this collector
+`bronze.course_catalog` has a `UNIQUE (batch_id, bundle_id)` constraint, and this job
 upserts on it via `ON CONFLICT`. Synthetic "catalogue-only, no batch" rows always have
 `batch_id = NULL`. Postgres never treats two `NULL`s as equal for uniqueness purposes, so
 those specific rows will **not** upsert across repeated full-refresh runs -- each run
 inserts a fresh row for every catalogue bundle that still has no batches, rather than
 updating the previous run's row in place. This is the same known limitation already
 documented in the `course_batch_merge` README, inherited from the pre-existing table
-definition (which this change does not modify) rather than from collector logic; flagging
+definition (which this change does not modify) rather than from job logic; flagging
 it here for whoever owns downstream Silver/Gold modeling of this table.
 
 ## Registry status (updated 2026-09-23)
 
-`pandas`/`numpy` are in `requirements.txt`, and this collector is registered in
-`api_scripts/runner.py::collector_registry()` as `attendance_data.catalogue`, with
-`TransformedTableRepository` wired into `CollectorRuntime`. It is runnable via
+`pandas`/`numpy` are in `requirements.txt`, and this job is registered in
+`api_scripts/runner.py::job_registry()` as `attendance_data.catalogue`, with
+`TransformedTableRepository` wired into `JobRuntime`. It is runnable via
 `python warehouse_cli.py collect attendance_data.catalogue`. It stays `is_enabled: false`
 in `services/scheduler/jobs.example.yaml` (as does every job in this repo) -- that flag,
 not registry wiring, is what gates it from running against the live Edmingle API.

@@ -1,7 +1,7 @@
 """Small, dependency-free normalization helpers shared by every Silver
 transform. Deliberately plain functions (no pandas) -- these transforms are
 row-by-row cleanups, not the pandas-heavy business logic that lives in
-api_scripts/ collectors."""
+api_scripts/ jobs."""
 from __future__ import annotations
 
 import re

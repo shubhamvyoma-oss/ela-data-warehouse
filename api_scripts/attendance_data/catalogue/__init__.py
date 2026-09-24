@@ -1,1 +1,1 @@
-"""Edmingle course-catalogue collector."""
+"""Edmingle course-catalogue job."""

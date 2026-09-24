@@ -13,17 +13,17 @@ from typing import Any
 from api_scripts.attendance.attendance import (
     BATCH_SUMMARY_TABLE,
     SESSION_TABLE,
-    AttendanceCollector,
+    AttendanceJob,
 )
-from api_scripts.attendance_data.catalogue.course_catalogue import CourseCatalogueCollector
-from api_scripts.attendance_data.class_id_lookup.class_id_lookup import ClassIdLookupCollector
-from api_scripts.attendance_data.class_session_attendance.class_session_attendance import ClassSessionAttendanceCollector
-from api_scripts.courses_batches.course_batch_merge.course_batch_merge import CourseBatchMergeCollector
-from api_scripts.courses_batches.course_catalogue_raw.course_catalogue_raw import CourseCatalogueRawCollector
-from api_scripts.ela_mis_datasets.course_enrollments.course_enrollments import CourseEnrollmentsCollector
-from api_scripts.ela_mis_datasets.students.students import StudentsCollector
+from api_scripts.attendance_data.catalogue.course_catalogue import CourseCatalogueJob
+from api_scripts.attendance_data.class_id_lookup.class_id_lookup import ClassIdLookupJob
+from api_scripts.attendance_data.class_session_attendance.class_session_attendance import ClassSessionAttendanceJob
+from api_scripts.courses_batches.course_batch_merge.course_batch_merge import CourseBatchMergeJob
+from api_scripts.courses_batches.course_catalogue_raw.course_catalogue_raw import CourseCatalogueRawJob
+from api_scripts.ela_mis_datasets.course_enrollments.course_enrollments import CourseEnrollmentsJob
+from api_scripts.ela_mis_datasets.students.students import StudentsJob
 from api_scripts.enrollments_reports.enrollments_reports import build_chunks
-from api_scripts.runner import collector_registry
+from api_scripts.runner import job_registry
 
 
 class FakeClient:
@@ -129,10 +129,10 @@ def test_attendance_uses_confirmed_report_contract_and_computes_summaries(monkey
     client = FakeClient(lambda _path, _params: {"data": [_ATTENDANCE_ROW_1, _ATTENDANCE_ROW_2]})
     runtime = FakeRuntime(client)
 
-    AttendanceCollector().run(runtime, {})
+    AttendanceJob().run(runtime, {})
 
-    assert AttendanceCollector.name == "attendance"
-    assert AttendanceCollector.checkpoint_partition_key == "daily"
+    assert AttendanceJob.name == "attendance"
+    assert AttendanceJob.checkpoint_partition_key == "daily"
 
     # ── endpoint contract: one call, report_type=55 CSV endpoint ──
     assert len(client.calls) == 1
@@ -191,7 +191,7 @@ def test_attendance_commits_empty_summaries_when_no_rows_fetched(monkeypatch) ->
     client = FakeClient(lambda _path, _params: {"data": []})
     runtime = FakeRuntime(client)
 
-    AttendanceCollector().run(runtime, {})
+    AttendanceJob().run(runtime, {})
 
     session_calls = _calls_for_table(runtime, SESSION_TABLE)
     batch_calls = _calls_for_table(runtime, BATCH_SUMMARY_TABLE)
@@ -202,7 +202,7 @@ def test_attendance_commits_empty_summaries_when_no_rows_fetched(monkeypatch) ->
 
 
 # ═══════════════════════════════════════════════════════════════════
-# catalogue (CourseCatalogueCollector -- primary catalogue builder)
+# catalogue (CourseCatalogueJob -- primary catalogue builder)
 # ═══════════════════════════════════════════════════════════════════
 
 # _FIELD_MAP column indices shared by catalogue and course_batch_merge (identical map).
@@ -286,9 +286,9 @@ def test_catalogue_fetches_active_and_completed_only_and_excludes_bad_batch_ids(
     client = FakeClient(_catalogue_handler)
     runtime = FakeRuntime(client)
 
-    CourseCatalogueCollector().run(runtime, {})
+    CourseCatalogueJob().run(runtime, {})
 
-    assert CourseCatalogueCollector.name == "attendance_data.catalogue"
+    assert CourseCatalogueJob.name == "attendance_data.catalogue"
 
     masterbatch_calls = [(p, params) for p, params in client.calls if p == "/short/masterbatch"]
     statuses_called = sorted(params["status"] for _p, params in masterbatch_calls)
@@ -395,9 +395,9 @@ def test_course_batch_merge_fetches_all_statuses_and_filters_test_batches_and_co
     client = FakeClient(_merge_handler)
     runtime = FakeRuntime(client)
 
-    CourseBatchMergeCollector().run(runtime, {})
+    CourseBatchMergeJob().run(runtime, {})
 
-    assert CourseBatchMergeCollector.name == "courses_batches.course_batch_merge"
+    assert CourseBatchMergeJob.name == "courses_batches.course_batch_merge"
 
     masterbatch_calls = [(p, params) for p, params in client.calls if p == "/short/masterbatch"]
     statuses_called = sorted(params["status"] for _p, params in masterbatch_calls)
@@ -433,9 +433,9 @@ def test_course_catalogue_raw_flattens_and_hashes_rows() -> None:
     client = FakeClient(lambda _path, _params: payload)
     runtime = FakeRuntime(client)
 
-    CourseCatalogueRawCollector().run(runtime, {})
+    CourseCatalogueRawJob().run(runtime, {})
 
-    assert CourseCatalogueRawCollector.name == "courses_batches.course_catalogue_raw"
+    assert CourseCatalogueRawJob.name == "courses_batches.course_catalogue_raw"
 
     assert client.calls == [
         ("/institute/683/courses/catalogue", {"institution_id": "683"})
@@ -470,7 +470,7 @@ def test_course_catalogue_raw_falls_back_to_bundle_id_key() -> None:
     client = FakeClient(lambda _path, _params: payload)
     runtime = FakeRuntime(client)
 
-    CourseCatalogueRawCollector().run(runtime, {})
+    CourseCatalogueRawJob().run(runtime, {})
 
     rows = _calls_for_table(runtime, "bronze.course_catalogue_raw")[0]["rows"]
     assert len(rows) == 1
@@ -512,9 +512,9 @@ def test_students_paginates_until_empty_page_and_extracts_custom_fields() -> Non
     client = FakeClient(handler)
     runtime = FakeRuntime(client)
 
-    StudentsCollector().run(runtime, {})
+    StudentsJob().run(runtime, {})
 
-    assert StudentsCollector.name == "ela_mis_datasets.students"
+    assert StudentsJob.name == "ela_mis_datasets.students"
 
     assert [params["page"] for _p, params in client.calls] == [1, 2]
 
@@ -553,17 +553,17 @@ def test_enrollment_reports_build_chunks_splits_by_chunk_days() -> None:
 
 
 def test_enrollment_reports_name_and_registry_match() -> None:
-    from api_scripts.enrollments_reports.enrollments_reports import EnrollmentReportsCollector
+    from api_scripts.enrollments_reports.enrollments_reports import EnrollmentReportsJob
 
-    assert EnrollmentReportsCollector.name == "enrollment_reports"
-    assert EnrollmentReportsCollector.checkpoint_partition_key == "default"
-    assert collector_registry()["enrollment_reports"] is EnrollmentReportsCollector
+    assert EnrollmentReportsJob.name == "enrollment_reports"
+    assert EnrollmentReportsJob.checkpoint_partition_key == "default"
+    assert job_registry()["enrollment_reports"] is EnrollmentReportsJob
 
 
 # ═══════════════════════════════════════════════════════════════════
 # class_id_lookup / course_enrollments / class_session_attendance
 #
-# These three collectors open their OWN `Database` connection inside run()
+# These three jobs open their OWN `Database` connection inside run()
 # to read an upstream job's Bronze table (bronze.course_catalog,
 # bronze.students, bronze.class_id_lookup respectively) as well as their
 # own output table for resume/checkpoint state. That can't be meaningfully
@@ -573,20 +573,20 @@ def test_enrollment_reports_name_and_registry_match() -> None:
 # not a behavioral test. This is a real coverage gap, not full coverage.
 # ═══════════════════════════════════════════════════════════════════
 
-_DB_DEPENDENT_COLLECTORS = {
-    "attendance_data.class_id_lookup": ClassIdLookupCollector,
-    "ela_mis_datasets.course_enrollments": CourseEnrollmentsCollector,
-    "attendance_data.class_session_attendance": ClassSessionAttendanceCollector,
+_DB_DEPENDENT_JOBS = {
+    "attendance_data.class_id_lookup": ClassIdLookupJob,
+    "ela_mis_datasets.course_enrollments": CourseEnrollmentsJob,
+    "attendance_data.class_session_attendance": ClassSessionAttendanceJob,
 }
 
 
-def test_db_dependent_collectors_are_registered_with_expected_shape() -> None:
-    registry = collector_registry()
+def test_db_dependent_jobs_are_registered_with_expected_shape() -> None:
+    registry = job_registry()
 
-    for name, collector_cls in _DB_DEPENDENT_COLLECTORS.items():
-        assert registry[name] is collector_cls
-        assert collector_cls.name == name
-        assert collector_cls.checkpoint_partition_key == "default"
+    for name, job_cls in _DB_DEPENDENT_JOBS.items():
+        assert registry[name] is job_cls
+        assert job_cls.name == name
+        assert job_cls.checkpoint_partition_key == "default"
 
-        run_params = list(inspect.signature(collector_cls.run).parameters)
+        run_params = list(inspect.signature(job_cls.run).parameters)
         assert run_params == ["self", "runtime", "checkpoint"]

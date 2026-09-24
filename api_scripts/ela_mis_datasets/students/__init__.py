@@ -1,1 +1,1 @@
-"""Edmingle student-roster collector."""
+"""Edmingle student-roster job."""

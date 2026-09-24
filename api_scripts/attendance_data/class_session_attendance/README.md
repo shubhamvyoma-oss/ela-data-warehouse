@@ -1,4 +1,4 @@
-# Class session attendance collector
+# Class session attendance job
 
 Direct port of `Attendance data/build_session_attendance.py` (Stage 3 of the legacy Edmingle
 attendance pipeline), together with the shared extract functions it imports from
@@ -27,15 +27,15 @@ present -- same reasoning as `class_id_lookup`'s README).
 ## Dependency: requires `class_id_lookup` to have already run
 
 This job reads its list of `class_id`s (plus `bundle_id`/`bundle_name`) from
-**`bronze.class_id_lookup`**, the `class_id_lookup` collector's output table -- not from a CSV,
+**`bronze.class_id_lookup`**, the `class_id_lookup` job's output table -- not from a CSV,
 unlike the original script. **Run `class_id_lookup` first** (which itself depends on
 `catalogue`, per that job's own README). If `bronze.class_id_lookup` is empty, this job has
 nothing to iterate over and writes zero rows; it does not error.
 
-Concretely, on each run this collector:
+Concretely, on each run this job:
 
 1. Opens its own short-lived read-only `Database` connection (separate from the
-   `CollectorRuntime`/`TransformedTableRepository` write path) and queries
+   `JobRuntime`/`TransformedTableRepository` write path) and queries
    `SELECT DISTINCT class_id, bundle_id, bundle_name FROM bronze.class_id_lookup WHERE class_id
    IS NOT NULL`.
 2. Skips rows with no resolved `class_id` and deduplicates by `class_id` (keeping the first
@@ -47,10 +47,10 @@ Concretely, on each run this collector:
    `class_id_lookup` uses against its own output table).
 4. For each remaining `class_id`, calls `/organization/attendances` for the configured date
    window, shapes the returned sessions, and writes them via
-   `CollectorRuntime.commit_rows(...)`, updating the checkpoint
+   `JobRuntime.commit_rows(...)`, updating the checkpoint
    (`{"class_ids_processed": N, "updated_at": <iso>}`) after every `class_id` -- so a crash or
    rate-limit block loses no already-pulled progress, same as the original's per-class_id CSV
-   append. One `CollectorRuntime.commit_rows()` call per `class_id` was chosen over batching
+   append. One `JobRuntime.commit_rows()` call per `class_id` was chosen over batching
    several `class_id`s per transaction, matching `class_id_lookup`'s convention, since
    `bronze.class_session_attendance`'s `UNIQUE (session_id)` constraint already makes a
    per-class_id commit cheap and crash-safe.
@@ -63,7 +63,7 @@ Concretely, on each run this collector:
 Unlike the `attendance` (report_type=55) job, which defaults to a rolling lookback window, this
 job requires an explicit window -- matching the original CLI's required `--start`/`--end`
 arguments, since a bulk historical pull needs an intentional, bounded date range rather than an
-implicit "yesterday". Both env vars are `YYYY-MM-DD` and both are required; the collector raises
+implicit "yesterday". Both env vars are `YYYY-MM-DD` and both are required; the job raises
 if either is missing.
 
 ## Field mapping and derivations (ported as-is from the shared functions)
@@ -98,7 +98,7 @@ if either is missing.
 
 ### Difference from `report55_session_attendance`
 
-`bronze.report55_session_attendance` (not yet built as a collector; only its table exists,
+`bronze.report55_session_attendance` (not yet built as a job; only its table exists,
 migration `006_legacy_pipeline_bronze_tables.sql`) is the per-session detail half of the
 separate `attendance` (report_type=55) pipeline, ported from `attendance/attendance.py`. The two
 pipelines are independent and intentionally not reconciled against each other in code (that's
@@ -134,11 +134,11 @@ The original scripts hand-rolled a ~24-calls/min limiter (`RateLimiter`, from
 (`parse_retry_after_seconds`). Both are superseded here by the shared `EdmingleApiClient`
 (`api_scripts/common/api_client.py`), which already enforces
 `EDMINGLE_MIN_REQUEST_INTERVAL_SECONDS` spacing and retries 429/5xx responses with backoff -- no
-separate rate limiter is reimplemented in this collector, same simplification `class_id_lookup`
+separate rate limiter is reimplemented in this job, same simplification `class_id_lookup`
 already made.
 
 The application-level `{"code": 200, "classes": [...]}` envelope is not something the generic
-client validates (it only rejects Edmingle's own `error_code` 6001/6002), so this collector
+client validates (it only rejects Edmingle's own `error_code` 6001/6002), so this job
 explicitly checks `payload.get("code") == 200` before reading `classes` -- a non-200 application
 code is logged and treated as "no sessions for this class_id" rather than raised, matching the
 original's `if data.get("code") != 200: ... return []` behavior (it does not abort the whole
@@ -146,9 +146,9 @@ run over one class_id's bad response).
 
 ## Status (updated 2026-09-23)
 
-Registered in `api_scripts/runner.py`'s `collector_registry()` as
+Registered in `api_scripts/runner.py`'s `job_registry()` as
 `attendance_data.class_session_attendance`, with `TransformedTableRepository` wired into the
-`CollectorRuntime` the runner constructs. Runnable via `python warehouse_cli.py collect
+`JobRuntime` the runner constructs. Runnable via `python warehouse_cli.py collect
 attendance_data.class_session_attendance`. It still ships **disabled**
 (`system.api_scripts.is_enabled = false` / `system.pipelines.is_enabled = false`, and
 `is_enabled: false` in `services/scheduler/jobs.example.yaml`) -- that flag, not registry

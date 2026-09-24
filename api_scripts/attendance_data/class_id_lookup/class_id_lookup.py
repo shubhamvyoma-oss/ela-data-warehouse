@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from api_scripts.common.repositories import utc_iso
-from api_scripts.common.runtime import CollectorRuntime
+from api_scripts.common.runtime import JobRuntime
 from shared.config import DatabaseSettings
 from shared.database import Database
 
@@ -78,19 +78,19 @@ def _courses_array_to_records(courses_array: list[Any]) -> list[dict[str, Any]]:
     return records
 
 
-class ClassIdLookupCollector:
+class ClassIdLookupJob:
     """Resolves class_id(s) for every batch_id found in bronze.course_catalog
     via GET /masterbatch/<batch_id>, direct port of
     'Attendance data/resolve_class_ids.py' (Stage 2 of the legacy pipeline).
 
-    Depends on the `catalogue` collector having already populated
+    Depends on the `catalogue` job having already populated
     bronze.course_catalog -- see README.md.
     """
 
     name = "attendance_data.class_id_lookup"
     checkpoint_partition_key = "default"
 
-    def run(self, runtime: CollectorRuntime, checkpoint: dict[str, Any]) -> None:
+    def run(self, runtime: JobRuntime, checkpoint: dict[str, Any]) -> None:
         catalogue_batches = self._load_catalogue_batches()
         already_processed = self._load_already_processed()
 
@@ -142,7 +142,7 @@ class ClassIdLookupCollector:
             )
 
     def _fetch_classes_for_batch(
-        self, runtime: CollectorRuntime, batch_id: str
+        self, runtime: JobRuntime, batch_id: str
     ) -> list[Any]:
         """GET /masterbatch/<batch_id>. The shared EdmingleApiClient session
         already sends `apikey` and `ORGID` headers on every request; the
@@ -174,7 +174,7 @@ class ClassIdLookupCollector:
         the ported `catalogue` job's output table -- instead of the original
         script's course_catalog.csv. This is a read-only lookup query against
         an upstream job's table, so it uses its own short-lived Database
-        connection rather than CollectorRuntime's write-oriented repositories.
+        connection rather than JobRuntime's write-oriented repositories.
 
         Queries DISTINCT (batch_id, bundle_id, bundle_name, batch_name)
         tuples with batch_id IS NOT NULL, per the ported job's spec. A given

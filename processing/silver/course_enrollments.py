@@ -9,7 +9,7 @@ entities per project-owner decision, see ROADMAP.md.
 start_date/end_date/classusers_start_date/classusers_end_date/archived_at
 are passed through as cleaned text, not parsed into dates: the source API's
 exact date format for these fields has never been confirmed against a live
-sample (the Bronze collector itself only ever passed them through as plain
+sample (the Bronze job itself only ever passed them through as plain
 text), so guessing a parse format here risks silently producing wrong dates.
 """
 from __future__ import annotations

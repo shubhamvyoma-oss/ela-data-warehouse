@@ -5,9 +5,9 @@ from typing import Any
 
 from api_scripts.common.edmingle import require_record_list
 from api_scripts.common.repositories import utc_iso
-from api_scripts.common.runtime import CollectorRuntime
+from api_scripts.common.runtime import JobRuntime
 
-# Bronze table this collector writes into. Real columns were confirmed against
+# Bronze table this job writes into. Real columns were confirmed against
 # the live database before this was written -- see api_scripts/students/README.md.
 TABLE = "bronze.students"
 
@@ -62,7 +62,7 @@ CUSTOM_FIELD_INDEX = {
 DEFAULT_STUDENTS_PER_PAGE = 500
 
 
-class StudentsCollector:
+class StudentsJob:
     """Ports the student-roster half of edmingle_student_course_sync.py.
 
     The original script paced through pages with a resume/overlap mechanism
@@ -77,7 +77,7 @@ class StudentsCollector:
     name = "ela_mis_datasets.students"
     checkpoint_partition_key = "default"
 
-    def run(self, runtime: CollectorRuntime, checkpoint: dict[str, Any]) -> None:
+    def run(self, runtime: JobRuntime, checkpoint: dict[str, Any]) -> None:
         # `checkpoint` (the last-committed checkpoint) is intentionally not used
         # to pick a resume page -- see the class docstring and README.md.
         organization_id = runtime.client.settings.organization_id

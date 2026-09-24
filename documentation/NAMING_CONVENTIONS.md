@@ -7,7 +7,7 @@ ESD-01.4 convention and resolves conflicts found across the conceptual architect
 
 - Use lowercase `snake_case` for folders, Python modules, and files.
 - API collection jobs live under `api_scripts/<job_name>/`.
-- Approved file-ingestion code lives under `manual_imports/`; it is not an API collector.
+- Approved file-ingestion code lives under `manual_imports/`; it is not an API job.
 - Independently running processes live under `services/<service_name>/`.
 - Shared reusable Python capabilities live under `shared/<capability>/`.
 - Processing stages use `processing/bronze/`, `processing/silver/`, `processing/gold/`,
@@ -31,14 +31,14 @@ ESD-01.4 convention and resolves conflicts found across the conceptual architect
 - Current configuration/state belongs in `system` and `monitoring`; history belongs in `audit`.
 - Credentials tables store lifecycle metadata only. Secret values stay in runtime secret storage.
 
-## Confirmed collector names
+## Confirmed job names
 
 `api_scripts/` has exactly six top-level folders, one per original legacy
 script folder the extract/transform logic was ported from. A folder that
 covers more than one job nests each job in its own subfolder with a
 `parent.job` registry name; a folder with exactly one job keeps a plain name.
 
-| Collector | Folder | Bronze table |
+| Job | Folder | Bronze table |
 | --- | --- | --- |
 | `attendance` | `api_scripts/attendance/` | `report55_batch_attendance_summary`, `report55_session_attendance` |
 | `attendance_data.catalogue` | `api_scripts/attendance_data/catalogue/` | `course_catalog` |
@@ -51,11 +51,11 @@ covers more than one job nests each job in its own subfolder with a
 | `enrollment_reports` | `api_scripts/enrollments_reports/` | `enrollment_reports` |
 
 `api_scripts/edmingle_api_key_generator/` (the sixth legacy folder) is not a
-Bronze-writing collector -- it generates and emails a new Edmingle API key,
+Bronze-writing job -- it generates and emails a new Edmingle API key,
 see its own README. The pre-existing `api_scripts/api_key_manager/` folder
 (key lifecycle/expiry checks) predates this port and isn't one of the six.
 
-The original four raw-ingestion collectors this project started with
+The original four raw-ingestion jobs this project started with
 (`attendance` -> `attendance_records`, `enrollment` -> `student_enrollments`,
 `batches` -> `batches`, `catalogue` -> `courses`, all writing into the single
 generic `bronze.edmingle_api_records` table) were replaced or retired when

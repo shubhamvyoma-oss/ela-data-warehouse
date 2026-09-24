@@ -45,7 +45,7 @@ class RawRecord:
 
 
 @dataclass
-class CollectorStats:
+class JobStats:
     rows_read: int = 0
     rows_written: int = 0
     rows_rejected: int = 0

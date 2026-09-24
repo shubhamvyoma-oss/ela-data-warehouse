@@ -31,7 +31,7 @@ mirrors this project's existing pattern of a downstream job reading an upstream 
 already-committed Bronze table instead of re-deriving the list itself (e.g.
 `class_id_lookup` depending on `catalogue`).
 
-Because `CollectorRuntime` has no generic query method, this collector opens its own
+Because `JobRuntime` has no generic query method, this job opens its own
 short-lived `Database(DatabaseSettings.from_environment(), "course_enrollments-lookup")`
 connection inside `run()` purely to read `bronze.students`, separate from whatever
 connection the runtime uses internally to write via `commit_rows()`.
@@ -69,17 +69,17 @@ separately, makes the same simplification for the same reason.
   `bronze.students` row.
 - **Missing `class_id`**: `bronze.course_enrollments.class_id` is `NOT NULL`. The
   original script had no such constraint (CSV). If the API ever returns a class entry
-  without a `class_id`, this collector skips just that row (rather than failing the
+  without a `class_id`, this job skips just that row (rather than failing the
   whole batch) so one malformed entry can't block every other student in the batch.
 - No email alerting (startup checks, failure/status emails) is ported -- that
   belongs to the shared runner/observability layer (`audit.pipeline_runs`,
-  `audit.events`), not to an individual collector.
+  `audit.events`), not to an individual job.
 
 ## Status (updated 2026-09-23)
 
-Registered in `api_scripts/runner.py`'s `collector_registry()` as
+Registered in `api_scripts/runner.py`'s `job_registry()` as
 `ela_mis_datasets.course_enrollments`, with `TransformedTableRepository` wired into the
-`CollectorRuntime` `run_collector()` constructs. Runnable via `python warehouse_cli.py collect
+`JobRuntime` `run_job()` constructs. Runnable via `python warehouse_cli.py collect
 ela_mis_datasets.course_enrollments`. It stays `is_enabled: false` in
 `services/scheduler/jobs.example.yaml` (as does every job in this repo) -- that flag, not
 registry wiring, is what gates it from running against the live Edmingle API.

@@ -1,10 +1,10 @@
-# Course catalogue raw collector
+# Course catalogue raw job
 
 Collects the institute catalogue from
 `GET /institute/{institute_id}/courses/catalogue?institution_id={institute_id}`.
 
 `EDMINGLE_INSTITUTE_ID` is required (same env var and pattern as the `catalogue`
-collector). `EDMINGLE_API_KEY` / `EDMINGLE_ORGANIZATION_ID` (via
+job). `EDMINGLE_API_KEY` / `EDMINGLE_ORGANIZATION_ID` (via
 `EdmingleSettings.from_environment()`) authenticate the request.
 
 This is a direct, unreconciled port of

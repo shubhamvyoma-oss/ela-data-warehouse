@@ -6,7 +6,7 @@
 - failed `audit.pipeline_runs`
 - overdue scheduler jobs
 - API-key expiry metadata
-- collector checkpoint age
+- job checkpoint age
 - Bronze row growth by resource
 - rejected-record growth
 - database and filesystem free space
@@ -23,7 +23,7 @@ LIMIT 50;
 ```
 
 ```sql
-SELECT collector_name, partition_key, updated_at, checkpoint
+SELECT job_name, partition_key, updated_at, checkpoint
 FROM system.collection_checkpoints
 ORDER BY updated_at;
 ```

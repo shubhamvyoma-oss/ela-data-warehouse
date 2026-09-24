@@ -10,7 +10,7 @@ import pandas as pd
 
 from api_scripts.common.edmingle import require_record_list
 from api_scripts.common.repositories import utc_iso
-from api_scripts.common.runtime import CollectorRuntime
+from api_scripts.common.runtime import JobRuntime
 
 # ═══════════════════════════════════════════════════════════════════
 # Ported from the standalone production script `attendance.py`
@@ -26,8 +26,8 @@ from api_scripts.common.runtime import CollectorRuntime
 # FULL-WINDOW RECOMPUTE, NOT INCREMENTAL: every summary field below
 # (session_number, first_class_date, retention_percentage, ...) depends on
 # a batch's ENTIRE session history within the requested window, not just
-# newly-arrived days. So, unlike the raw-ingestion collector this replaces,
-# this collector does NOT resume from a `last_completed_date` checkpoint --
+# newly-arrived days. So, unlike the raw-ingestion job this replaces,
+# this job does NOT resume from a `last_completed_date` checkpoint --
 # every run re-fetches and recomputes its full ATTENDANCE_START_DATE /
 # ATTENDANCE_END_DATE / ATTENDANCE_LOOKBACK_DAYS window from scratch. The
 # original script has the same property: each invocation's summary is
@@ -37,7 +37,7 @@ from api_scripts.common.runtime import CollectorRuntime
 
 IST = timezone(timedelta(hours=5, minutes=30), name="IST")
 
-LOGGER = logging.getLogger("warehouse.collector.attendance")
+LOGGER = logging.getLogger("warehouse.job.attendance")
 
 BATCH_SUMMARY_TABLE = "bronze.report55_batch_attendance_summary"
 SESSION_TABLE = "bronze.report55_session_attendance"
@@ -129,11 +129,11 @@ _CLASS_DATE_FORMAT = "%d %b %Y"
 _START_TIME_FORMAT = "%I:%M %p"
 
 
-class AttendanceCollector:
+class AttendanceJob:
     name = "attendance"
     checkpoint_partition_key = "daily"
 
-    def run(self, runtime: CollectorRuntime, checkpoint: dict[str, Any]) -> None:
+    def run(self, runtime: JobRuntime, checkpoint: dict[str, Any]) -> None:
         start_date, end_date = _collection_window()
         if start_date > end_date:
             runtime.last_checkpoint = checkpoint
@@ -209,10 +209,10 @@ class AttendanceCollector:
 
 
 # ============================================================
-# FETCH (one call per IST calendar day, same as the raw-ingestion collector)
+# FETCH (one call per IST calendar day, same as the raw-ingestion job)
 # ============================================================
 
-def _fetch_window(runtime: CollectorRuntime, start_date: date, end_date: date) -> list[pd.DataFrame]:
+def _fetch_window(runtime: JobRuntime, start_date: date, end_date: date) -> list[pd.DataFrame]:
     frames: list[pd.DataFrame] = []
     current = start_date
     while current <= end_date:
@@ -244,7 +244,7 @@ def _fetch_window(runtime: CollectorRuntime, start_date: date, end_date: date) -
 def _collection_window() -> tuple[date, date]:
     """Resolves the date window from ATTENDANCE_START_DATE / ATTENDANCE_END_DATE /
     ATTENDANCE_LOOKBACK_DAYS -- the same env vars and defaults as the raw-ingestion
-    collector this replaces. Deliberately does NOT fall back to resuming from a
+    job this replaces. Deliberately does NOT fall back to resuming from a
     checkpoint's last_completed_date: this is a full-window recompute job (see
     module docstring), so the window is always fully operator/env-controlled."""
     yesterday = datetime.now(IST).date() - timedelta(days=1)

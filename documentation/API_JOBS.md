@@ -1,8 +1,8 @@
 # API Jobs
 
-Each API source has a dedicated folder under `api_scripts/` and exposes a collector through the central runner. Registered collector names below are exactly what `python warehouse_cli.py collect <name>` expects, matching `api_scripts/runner.py::collector_registry()`.
+Each API source has a dedicated folder under `api_scripts/` and exposes a job through the central runner. Registered job names below are exactly what `python warehouse_cli.py collect <name>` expects, matching `api_scripts/runner.py::job_registry()`.
 
-| Registered collector | Folder | Source behavior | Bronze table |
+| Registered job | Folder | Source behavior | Bronze table |
 | --- | --- | --- | --- |
 | `attendance` | `attendance/` | Date-windowed report `55`, one request per day | `report55_batch_attendance_summary`, `report55_session_attendance` |
 | `attendance_data.catalogue` | `attendance_data/catalogue/` | Institute course catalogue, merge/exclusion/latest-batch logic | `course_catalog` |
@@ -14,18 +14,18 @@ Each API source has a dedicated folder under `api_scripts/` and exposes a collec
 | `ela_mis_datasets.course_enrollments` | `ela_mis_datasets/course_enrollments/` | Per-(student, class) attendance summary (reads `students` for eligible user_ids) | `course_enrollments` |
 | `enrollment_reports` | `enrollments_reports/` | Date-chunked row-level enrollment report | `enrollment_reports` |
 
-Not a scheduled collector: `edmingle_api_key_generator/generate.py` is a manual-only script
+Not a scheduled job: `edmingle_api_key_generator/generate.py` is a manual-only script
 (username/password login, not API-key-authenticated) that generates a new Edmingle tutor API
 key, emails it to the configured recipients, and records only lifecycle metadata
 (`expires_at`/`status`) -- never the key value itself -- via the same `system.api_credentials`
-table every collector's `ApiKeyLifecycle` check reads. See `api_scripts/api_key_manager/README.md`
+table every job's `ApiKeyLifecycle` check reads. See `api_scripts/api_key_manager/README.md`
 and `edmingle_api_key_generator/generate.py`'s own docstring for the "never log/store the key"
 constraint.
 
 Folders for teachers, sessions, and transactions are reserved only as documented contracts.
 Their API scripts are not fabricated before endpoint samples are supplied.
 
-## Contract for every collector
+## Contract for every job
 
 1. Read credentials from environment-backed configuration.
 2. Read its checkpoint from `system.collection_checkpoints`.

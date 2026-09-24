@@ -1,38 +1,38 @@
 poll_seconds: 30
 jobs:
   - name: attendance_daily
-    collector: attendance
+    job_key: attendance
     is_enabled: false
     interval_minutes: 1440
   - name: attendance_data_catalogue_weekly
-    collector: attendance_data.catalogue
+    job_key: attendance_data.catalogue
     is_enabled: false
     interval_minutes: 10080
   - name: courses_batches_course_batch_merge_weekly
-    collector: courses_batches.course_batch_merge
+    job_key: courses_batches.course_batch_merge
     is_enabled: false
     interval_minutes: 10080
   - name: courses_batches_course_catalogue_raw_weekly
-    collector: courses_batches.course_catalogue_raw
+    job_key: courses_batches.course_catalogue_raw
     is_enabled: false
     interval_minutes: 10080
   - name: attendance_data_class_id_lookup_weekly
-    collector: attendance_data.class_id_lookup
+    job_key: attendance_data.class_id_lookup
     is_enabled: false
     interval_minutes: 10080
   - name: attendance_data_class_session_attendance_daily
-    collector: attendance_data.class_session_attendance
+    job_key: attendance_data.class_session_attendance
     is_enabled: false
     interval_minutes: 1440
   - name: ela_mis_datasets_students_weekly
-    collector: ela_mis_datasets.students
+    job_key: ela_mis_datasets.students
     is_enabled: false
     interval_minutes: 10080
   - name: ela_mis_datasets_course_enrollments_weekly
-    collector: ela_mis_datasets.course_enrollments
+    job_key: ela_mis_datasets.course_enrollments
     is_enabled: false
     interval_minutes: 10080
   - name: enrollment_reports_weekly
-    collector: enrollment_reports
+    job_key: enrollment_reports
     is_enabled: false
     interval_minutes: 10080
